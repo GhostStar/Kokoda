@@ -184,3 +184,5 @@ RTX/AMD/Intel 加速已认证。Qt 播放目前回读 GPU 到 CPU，不是零拷
 `cargo test --workspace --locked` 在 macOS 通过 50 项测试；中英两语的 `ManagerTests`、`LocalizationTests`，以及 `MultiSessionTests`、`SessionTests`、`GroupTests`、`WindowManagementTests`、`ViewerSizingTests`、`InputTests`、`DragTests`、`PasswordTests` 均通过。本地化校验覆盖 211 个双语键。GitHub macOS 任务已加入这些原生回归。测试应用均在完成后退出，本轮未启动 Windows 夹具或主机。
 
 这是本地界面／模型回归，不能替代 Windows 联网、Qt 界面、实体显卡、性能或实际输入法候选框验收。联网夹具驱动已改用新的管理模型选取，但本轮未重跑；既有已记录限制仍然有效。
+
+首轮 CI 暴露旧窗口组夹具对屏幕的假设：将请求的原生移动量当作实际位置。现改为核对实际内容位置与布局原点的差值，保留刷新不回跳断言，并按父窗口当前尺寸等比缩小，使较小 CI 屏幕验证相同行为。

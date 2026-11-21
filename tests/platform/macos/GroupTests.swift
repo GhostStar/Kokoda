@@ -29,15 +29,21 @@ let rootRect = root.window.convertToScreen(root.view.convert(root.view.imageRect
 precondition(abs(card.window.frame.minX-rootRect.maxX) <= 1.0, "Child must extend outside parent at right edge")
 precondition(card.window.styleMask.contains(.titled), "Popup needs a native drag title bar")
 let oldFrame=card.window.frame
-card.window.setFrameOrigin(NSPoint(x:oldFrame.minX+83,y:oldFrame.minY+47))
+// AppKit may constrain requested frame origins on a smaller CI display. Check
+// the actual content delta rather than assuming the requested move was applied.
+let expectedContent=RemoteWindowLayout.childRect(rootScreen:rootRect,rootBounds:controller.rootBounds,childBounds:card.bounds)
+card.window.setFrameOrigin(NSPoint(x:oldFrame.minX+83,y:oldFrame.minY-47))
 controller.windowDidMove(Notification(name:NSWindow.didMoveNotification,object:card.window))
 let draggedFrame=card.window.frame
+let draggedContent=card.window.contentRect(forFrameRect:draggedFrame)
+precondition(abs(draggedFrame.minX-oldFrame.minX)>1 || abs(draggedFrame.minY-oldFrame.minY)>1,"Fixture must actually move")
 sync([entry(2,2,cardBounds),entry(1,1,rootBounds)])
 precondition(card.window.frame == draggedFrame, "Group refresh snapped locally dragged popup back")
-precondition(abs(card.localOffset.x-83)<1 && abs(card.localOffset.y-47)<1)
+precondition(abs(card.localOffset.x-(draggedContent.minX-expectedContent.minX))<1 && abs(card.localOffset.y-(draggedContent.minY-expectedContent.minY))<1,"Local offset must track the actual native content position")
 print("PASS: native popup title bar and local drag position survive group refresh")
 let widthBefore = card.window.frame.width
-root.window.setContentSize(NSSize(width:800,height:600))
+let parentSize=root.window.contentRect(forFrameRect:root.window.frame).size
+root.window.setContentSize(NSSize(width:parentSize.width*0.7,height:parentSize.height*0.7))
 controller.layoutChildren()
 precondition(card.window.frame.width < widthBefore, "Child didn't rescale with parent")
 controller.videoMode = true
