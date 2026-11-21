@@ -221,7 +221,7 @@ class ClientTests : public QObject {
         QCOMPARE(qvariant_cast<QImage>(decoded[0][1]).pixelColor(0, 0), QColor(Qt::red));
     }
     void decodePaddedVideo() {
-        QFile file(QStringLiteral(KOKODA_FIXTURE_DIR) + "/desktop-color.h264");
+        QFile file(":/fixtures/desktop-color.h264");
         QVERIFY(file.open(QIODevice::ReadOnly));
         const auto encoded = QString::fromLatin1(file.readAll().toBase64());
         Player player;
