@@ -35,6 +35,7 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
     let hideButton=NSButton(title:L("manager.hide"),target:nil,action:nil)
     let endButton=NSButton(title:L("menu.end_viewing"),target:nil,action:nil)
     let settingsButton=NSButton(title:L("manager.options"),target:nil,action:nil)
+    var discovery:HostDiscovery!
     let form=NSStackView()
     let options=NSStackView()
     let reconnect=NSButton(checkboxWithTitle:L("menu.auto_reconnect"),target:nil,action:nil)
@@ -70,6 +71,10 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
         app.password.placeholderString=L("connection.password");app.password.setAccessibilityLabel(L("connection.password"))
         app.password.target=self;app.password.action=#selector(connectionAction)
         for field in [app.host,app.password] {form.addArrangedSubview(field);field.widthAnchor.constraint(equalTo:form.widthAnchor).isActive=true}
+        discovery=HostDiscovery(app:app)
+        let nearby=NSStackView(views:[discovery.choices,discovery.refreshButton])
+        form.addArrangedSubview(nearby);nearby.widthAnchor.constraint(equalTo:form.widthAnchor).isActive=true
+        form.addArrangedSubview(discovery.hint);discovery.hint.widthAnchor.constraint(equalTo:form.widthAnchor).isActive=true
         add(form)
         app.quality.addItems(withTitles:[L("quality.original"),L("quality.smooth"),L("quality.clear"),L("quality.fast")])
         app.quality.selectItem(at:app.globalPreset);app.quality.target=app;app.quality.action=#selector(AppDelegate.qualityChanged)
@@ -161,6 +166,7 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
     func refresh(force:Bool=false) {
         guard built,let app=app else{return}
         if !force,Date().timeIntervalSince(lastRefresh)<0.2 {return};lastRefresh=Date()
+        discovery.tick()
         let busy=app.process != nil || app.wantsConnection
         form.isHidden=app.authenticated;app.host.isEnabled = !busy;app.password.isEnabled = !busy
         summary.stringValue=app.authenticated ? app.host.stringValue:(busy ? L("manager.connecting"):L("status.not_connected"))

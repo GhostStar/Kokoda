@@ -18,6 +18,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           for language in en zh-Hans; do
+            KOKODA_TEST_LANGUAGE=$language scripts/run-macos-test.sh DiscoveryTests
             KOKODA_TEST_LANGUAGE=$language scripts/run-macos-test.sh ManagerTests
             KOKODA_TEST_LANGUAGE=$language scripts/run-macos-test.sh LocalizationTests
           done

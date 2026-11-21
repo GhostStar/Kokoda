@@ -8,6 +8,7 @@ version.workspace = true
 crate-type = ["lib", "staticlib", "cdylib"]
 
 [dependencies]
+kokoda-discovery = { path = "../discovery" }
 serde_json.workspace = true
 kokoda-protocol = { path = "../protocol" }
 kokoda-transport = { path = "../transport" }

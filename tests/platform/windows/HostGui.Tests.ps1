@@ -1,6 +1,7 @@
 ﻿param([Parameter(Mandatory=$true)][string]$BinaryDirectory,[Parameter(Mandatory=$true)][string]$ResultDirectory)
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName Accessibility
 Add-Type @'
@@ -8,6 +9,7 @@ using System;
 using System.Text;
 using System.Runtime.InteropServices;
 public static class HostGuiNative {
+ public static IntPtr WindowPicker() {return FindWindow("KokodaWindowPicker",null);}
  public static IntPtr PasswordDialog() {return FindWindow("KokodaPasswordDialog",null);}
  public delegate bool EnumProc(IntPtr hwnd,IntPtr param);
  [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc callback,IntPtr p);
@@ -38,6 +40,8 @@ New-Item -ItemType Directory -Force $ResultDirectory | Out-Null
 $data=Join-Path $ResultDirectory ('identity-test-'+[Guid]::NewGuid().ToString('N'))
 $env:KOKODA_HOST_DATA_DIR=$data
 $gui=$null;$bridge=$null;$listener=$null;$workerId=$null
+$fixtures=@();$originalComputerName=$env:COMPUTERNAME
+$env:COMPUTERNAME="Kokoda-Discovery-Gui-Fixture"
 function Assert($value,$message) { if(!$value){throw $message} }
 function Control($id) { [HostGuiNative]::GetDlgItem($script:window,$id) }
 function Click($id) { [HostGuiNative]::SendMessage((Control $id),0xF5,[IntPtr]::Zero,[IntPtr]::Zero) | Out-Null }
@@ -93,6 +97,42 @@ try {
  $role=$accessible.accRole(0)
  Assert ($role -eq 43) 'Start button lacks native push-button role'
  Assert ($accessible.accDefaultAction(0).Length -gt 0) 'Start button lacks native accessible action'
+ # The picker sees only local windows; use three synthetic same-process forms.
+ $root=New-Object Windows.Forms.Form;$root.Text='Kokoda Picker Public';$root.Show()
+ $other=New-Object Windows.Forms.Form;$other.Text='Kokoda Picker Private';$other.Show()
+ $owned=New-Object Windows.Forms.Form;$owned.Text='Kokoda Picker Dialog';$owned.Show($root)
+ $fixtures=@($owned,$other,$root);[Windows.Forms.Application]::DoEvents()
+ [HostGuiNative]::PostMessage($window,0x111,[IntPtr]118,(Control 118))|Out-Null
+ Wait-For {[HostGuiNative]::WindowPicker() -ne [IntPtr]::Zero} 'Window picker did not open'
+ $picker=[HostGuiNative]::WindowPicker()
+ $search=[HostGuiNative]::GetDlgItem($picker,301);$list=[HostGuiNative]::GetDlgItem($picker,302)
+ [HostGuiNative]::WriteText($search,0xC,[IntPtr]::Zero,'Kokoda Picker Public')|Out-Null
+ Wait-For {[HostGuiNative]::SendMessage($list,0x18B,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32() -eq 1} 'Picker search did not isolate fixture'
+ [HostGuiNative]::SendMessage($list,0x186,[IntPtr]::Zero,[IntPtr]::Zero)|Out-Null
+ [HostGuiNative]::SendMessage($picker,0x111,[IntPtr](302 -bor (1 -shl 16)),$list)|Out-Null
+ $preview=[HostGuiNative]::GetDlgItem($picker,304)
+ Assert ([HostGuiNative]::SendMessage($preview,0x18B,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32() -eq 2) 'Preview did not distinguish owned dialog from independent sibling'
+ # Automatic refresh preserves the same window selection when its title changes.
+ $root.Text='Kokoda Picker Public renamed';[Windows.Forms.Application]::DoEvents()
+ Wait-For {$line=New-Object Text.StringBuilder 4096;[HostGuiNative]::ReadText($list,0x189,[IntPtr]::Zero,$line)|Out-Null;$line.ToString().Contains('renamed')} 'Automatic picker refresh missed title change'
+ Assert ([HostGuiNative]::SendMessage($list,0x188,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32() -eq 0) 'Refresh lost stable window selection'
+ $root.Text='Kokoda Picker Public';[Windows.Forms.Application]::DoEvents()
+ Wait-For {$line=New-Object Text.StringBuilder 4096;[HostGuiNative]::ReadText($list,0x189,[IntPtr]::Zero,$line)|Out-Null;!$line.ToString().Contains('renamed')} 'Picker did not refresh restored title'
+ # Capture only this filtered, synthetic preview.
+ $pr=New-Object HostGuiNative+Rect;[HostGuiNative]::GetWindowRect($picker,[ref]$pr)|Out-Null
+ $pb=New-Object Drawing.Bitmap ($pr.R-$pr.L),($pr.B-$pr.T);$pg=[Drawing.Graphics]::FromImage($pb);$pd=$pg.GetHdc()
+ try {[HostGuiNative]::PrintWindow($picker,$pd,2)|Out-Null} finally {$pg.ReleaseHdc($pd);$pg.Dispose()}
+ $pb.Save((Join-Path $ResultDirectory 'host-picker.png'),[Drawing.Imaging.ImageFormat]::Png);$pb.Dispose()
+
+ [HostGuiNative]::SendMessage([HostGuiNative]::GetDlgItem($picker,305),0xF5,[IntPtr]::Zero,[IntPtr]::Zero)|Out-Null
+ Wait-For {![HostGuiNative]::IsWindow($picker)} 'Picker did not accept rule'
+ Wait-For {Test-Path "$data\settings.json"} 'Picker rule was not saved'
+ $saved=Get-Content "$data\settings.json" -Raw|ConvertFrom-Json
+ Assert ($saved.policy.rules.Count -eq 1 -and $saved.policy.rules[0].title_contains -eq 'Kokoda Picker Public' -and $saved.policy.rules[0].executable) 'Example did not produce combined rule'
+ [HostGuiNative]::SendMessage((Control 111),0x186,[IntPtr]::Zero,[IntPtr]::Zero)|Out-Null;Click 110
+ foreach($f in $fixtures){$f.Close();$f.Dispose()};$fixtures=@()
+ Assert (![HostGuiNative]::SendMessage((Control 119),0xF0,[IntPtr]::Zero,[IntPtr]::Zero).ToInt32()) 'Discovery must be opt-in'
+ Click 119
  Click 101
  Assert ([HostGuiNative]::IsWindowEnabled((Control 104))) 'Host started without a password'
  $script:password='GUI-test-'+[Guid]::NewGuid().ToString('N')
@@ -136,9 +176,11 @@ try {
  $null=List-Windows -Password $old -Reject $true
  $null=List-Windows
  $gui.Kill();$gui.WaitForExit();Wait-Stopped $workerId
- 'PASS: GUI subsystem, accessible buttons, invalid port, bind failure, password setup/rotation, wrong-password rejection, OPAQUE/TLS, no pairing files, empty default, rules/preview, full mode, restart, close and crash cleanup' | Set-Content -Encoding UTF8 "$ResultDirectory\result.txt"
+ 'PASS: automatic window picker, owner preview, combined rule, discovery opt-in, GUI subsystem, accessible buttons, invalid port, bind failure, password setup/rotation, wrong-password rejection, OPAQUE/TLS, no pairing files, empty default, rules/preview, full mode, restart, close and crash cleanup' | Set-Content -Encoding UTF8 "$ResultDirectory\result.txt"
 } catch { if($gui){[HostGuiNative]::TestWindows($gui.Id) | Set-Content -Encoding UTF8 "$ResultDirectory\test-windows.txt"}; $_.ToString() | Set-Content -Encoding UTF8 "$ResultDirectory\failure.txt"; throw }
 finally {
+ $env:COMPUTERNAME=$originalComputerName
+ foreach($f in $fixtures){$f.Close();$f.Dispose()}
  if($listener){$listener.Stop()}
  if($bridge -and !$bridge.HasExited){$bridge.Kill();$bridge.WaitForExit()}
  if($gui -and !$gui.HasExited){$gui.Kill();$gui.WaitForExit()}

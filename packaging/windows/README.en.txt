@@ -44,3 +44,5 @@ Each peer IP may attempt five connections per minute, including successes; wait 
 if this limit is reached.
 
 With updated clients, independent windows appear separately; owned panels do not get separate taskbar entries. Native close/minimize/maximize/resize controls operate the corresponding remote window in full-control mode. Use Window > End Viewing This Application to stop viewing without closing remote applications. Automatic process following covers verified owners and same-executable descendants; other helpers still need separate selection.
+
+While sharing is stopped, Choose running window creates a rule from a live local window and previews direct/owned matches. Enable Discoverable on LAN while sharing to let the Mac client find the host; the option is off by default and broadcasts computer name/address. Password authentication is still required. Manual addresses work if multicast discovery is blocked.

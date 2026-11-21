@@ -6,6 +6,7 @@ use std::{io::Read, path::Path};
 #[serde(default, deny_unknown_fields)]
 pub struct Settings {
     pub all_windows: bool,
+    pub discoverable: bool,
     pub port: Option<u16>,
     pub policy: Policy,
 }

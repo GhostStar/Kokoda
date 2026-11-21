@@ -59,3 +59,6 @@ The native runner lives in `apps/host-settings/windows`. It opens stopped, offer
 ## Windows / Linux client GUI
 
 Build instructions, package contents and interaction boundaries are in [desktop clients](desktop-clients.md). `Kokoda.exe` / the Linux Kokoda application connects to a Windows host; `KokodaHost.exe` manages sharing. The client launches its bridge automatically.
+
+
+[LAN discovery and local window selection](discovery.md).

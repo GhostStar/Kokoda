@@ -13,6 +13,7 @@ struct Bridge {
     connection: Option<Connection>,
     sessions: BTreeMap<u64, Window>,
     preset: u64,
+    discovery: Option<kokoda_discovery::Browser>,
 }
 impl Bridge {
     fn new() -> Self {
@@ -24,6 +25,24 @@ impl Bridge {
     fn dispatch(&mut self, event: Value) -> Result<Value, &'static str> {
         let mut actions = Vec::new();
         match event["type"].as_str().ok_or("missing_action")? {
+            "discovery_start" => {
+                if self.discovery.is_none() {
+                    match kokoda_discovery::Browser::new() {
+                        Ok(browser) => self.discovery = Some(browser),
+                        Err(_) => return Ok(json!({"hosts":[],"unavailable":true})),
+                    }
+                }
+                return Ok(json!({"hosts":self.discovery.as_mut().unwrap().snapshot()}));
+            }
+            "discovery_poll" => {
+                return Ok(
+                    json!({"hosts":self.discovery.as_mut().map(|b|b.snapshot()).unwrap_or_default()}),
+                )
+            }
+            "discovery_stop" => {
+                self.discovery = None;
+                return Ok(json!({"hosts":[]}));
+            }
             "manager_row" => return Ok(crate::manager::row(&event)),
             "track" => {
                 let session = event["session"].as_u64().ok_or("missing_session")?;

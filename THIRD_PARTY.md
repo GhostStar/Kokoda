@@ -76,3 +76,13 @@ Windows/Linux 客户端动态链接 Qt Core、Gui、Widgets，按 LGPL-3.0 使�
 Qt 内部第三方声明。Linux 通过发行版提供匹配的源码与声明。解码器调用
 FFmpeg 公共 API，未复制 RustDesk 解码源码；Windows 额外携带 swscale
 动态库，Linux 使用系统库，不打包显卡驱动。
+
+
+## LAN discovery
+
+Kokoda uses `mdns-sd = 0.22.0` under its MIT option for mDNS/DNS-SD
+advertisement and browsing, through `crates/discovery`. Source:
+https://github.com/keepsimple1/mdns-sd ; version and transitive dependencies
+are pinned in Cargo.lock. Original MIT notices for mdns-sd and its newly added
+network/channel dependencies accompany the applications in `packaging/licenses`.
+Discovery is an untrusted address hint; it does not replace Kokoda password authentication.

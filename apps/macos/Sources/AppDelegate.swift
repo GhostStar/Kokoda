@@ -1006,6 +1006,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return .terminateLater
     }
     func applicationWillTerminate(_ notification: Notification) {
+        manager?.discovery.stop()
         for observer in wakeObservers {NSWorkspace.shared.notificationCenter.removeObserver(observer)}
         wantsConnection=false;retryAt=nil;disconnect()
     }

@@ -1,6 +1,8 @@
 #![cfg_attr(all(windows, not(test)), windows_subsystem = "windows")]
 #[cfg(any(windows, test))]
 mod settings;
+#[cfg(any(windows, test))]
+mod window_catalog;
 #[cfg(windows)]
 mod ui;
 #[cfg(windows)]

@@ -1,5 +1,7 @@
 #[path = "password_dialog.rs"]
 mod password_dialog;
+#[path = "window_picker.rs"]
+mod window_picker;
 use crate::settings::{self, Settings};
 use kokoda_host::sharing::Rule;
 use std::{
@@ -53,6 +55,8 @@ const STATUS: i32 = 114;
 const ADDRESS: i32 = 115;
 const DETAIL: i32 = 116;
 const HELP: i32 = 117;
+const PICKER: i32 = 118;
+const DISCOVERABLE: i32 = 119;
 
 fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(Some(0)).collect()
@@ -95,9 +99,11 @@ struct Service {
     events: Receiver<(bool, String)>,
     started: Instant,
     ready: bool,
+    advertiser: Option<kokoda_discovery::Advertiser>,
 }
 impl Drop for Service {
     fn drop(&mut self) {
+        self.advertiser.take();
         let _ = self.child.kill();
         let _ = self.child.wait();
     }
@@ -162,6 +168,7 @@ impl Service {
                 events,
                 started: Instant::now(),
                 ready: false,
+                advertiser: None,
             })
         }
     }
@@ -282,7 +289,14 @@ impl App {
             usize::from(self.settings.all_windows),
             0,
         );
-        self.add("STATIC", "", 0, HELP, [24, 194, 686, 36]);
+        self.add(
+            "BUTTON",
+            &t("host.picker_title"),
+            WS_TABSTOP,
+            PICKER,
+            [24, 194, 206, 36],
+        );
+        self.add("STATIC", "", 0, HELP, [244, 194, 466, 40]);
         self.add("STATIC", &t("host.executable"), 0, -1, [24, 242, 110, 24]);
         self.add(
             "EDIT",
@@ -358,6 +372,19 @@ impl App {
             DETAIL,
             [24, 554, 686, 50],
         );
+        self.add(
+            "BUTTON",
+            &t("host.discoverable"),
+            WS_TABSTOP | BS_AUTOCHECKBOX,
+            DISCOVERABLE,
+            [24, 612, 686, 28],
+        );
+        SendMessageW(
+            self.id(DISCOVERABLE),
+            BM_SETCHECK,
+            usize::from(self.settings.discoverable),
+            0,
+        );
         self.layout(self.dpi);
         self.rules();
         self.enabled();
@@ -385,11 +412,11 @@ impl App {
     unsafe fn enabled(&self) {
         let idle = self.service.is_none();
         let selected = SendMessageW(self.id(MODE), CB_GETCURSEL, 0, 0) == 0;
-        for id in [START, MODE, PORT, PASSWORD] {
+        for id in [START, MODE, PORT, PASSWORD, DISCOVERABLE] {
             EnableWindow(self.id(id), idle as _);
         }
         EnableWindow(self.id(STOP), (!idle) as _);
-        for id in [EXE, TITLE, BROWSE, ADD, REMOVE, RULES] {
+        for id in [EXE, TITLE, BROWSE, ADD, REMOVE, RULES, PICKER] {
             EnableWindow(self.id(id), (idle && selected) as _);
         }
         EnableWindow(self.id(PREVIEW), idle as _);
@@ -423,6 +450,8 @@ impl App {
                 .ok_or_else(|| t("host.invalid_port"))?,
         );
         self.settings.all_windows = SendMessageW(self.id(MODE), CB_GETCURSEL, 0, 0) == 1;
+        self.settings.discoverable =
+            SendMessageW(self.id(DISCOVERABLE), BM_GETCHECK, 0, 0) == BST_CHECKED as isize;
         settings::save(&self.directory, &self.settings)?;
         Ok(())
     }
@@ -525,6 +554,17 @@ impl App {
         if let Some(service) = &mut self.service {
             while let Ok((ready, message)) = service.events.try_recv() {
                 if ready {
+                    if !service.ready && self.settings.discoverable {
+                        let name = std::env::var("COMPUTERNAME")
+                            .unwrap_or_else(|_| "Kokoda Windows".into());
+                        match kokoda_discovery::Advertiser::new(
+                            &name,
+                            self.settings.port.unwrap_or(47831),
+                        ) {
+                            Ok(advertiser) => service.advertiser = Some(advertiser),
+                            Err(_) => messages.push(t("host.discovery_failed")),
+                        }
+                    }
                     service.ready = true;
                     set(status_control, &t("host.running"));
                 } else {
@@ -599,6 +639,22 @@ impl App {
                     set(self.id(EXE), &String::from_utf16_lossy(&file[..len]));
                 }
             }
+            PICKER => {
+                if self.service.is_some() || SendMessageW(self.id(MODE), CB_GETCURSEL, 0, 0) != 0 {
+                    return Ok(());
+                }
+                KillTimer(self.hwnd, 1);
+                let result = window_picker::show(self.hwnd);
+                SetTimer(self.hwnd, 1, 250, None);
+                if let Some(rule) = result? {
+                    let mut candidate = self.settings.policy.clone();
+                    candidate.rules.push(rule);
+                    candidate.validate().map_err(|_| t("host.invalid_rule"))?;
+                    self.settings.policy = candidate;
+                    self.rules();
+                    self.preview()?;
+                }
+            }
             PREVIEW => self.preview()?,
             PASSWORD => {
                 if self.service.is_some() {
@@ -632,7 +688,7 @@ unsafe extern "system" fn procedure(hwnd: HWND, msg: UINT, wp: WPARAM, lp: LPARA
                     || (event == BN_CLICKED
                         && matches!(
                             id,
-                            START | STOP | PASSWORD | BROWSE | ADD | REMOVE | PREVIEW
+                            START | STOP | PASSWORD | BROWSE | ADD | REMOVE | PREVIEW | PICKER
                         ))
                 {
                     if let Err(error) = (*app).command(id) {
@@ -756,7 +812,7 @@ unsafe fn launch() -> Result<()> {
         left: 0,
         top: 0,
         right: MulDiv(734, dpi as _, 96),
-        bottom: MulDiv(620, dpi as _, 96),
+        bottom: MulDiv(656, dpi as _, 96),
     };
     AdjustWindowRectExForDpi(&mut rect, style, 0, 0, dpi);
     let hwnd = CreateWindowExW(

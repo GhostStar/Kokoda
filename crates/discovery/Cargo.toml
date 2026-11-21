@@ -1,0 +1,9 @@
+[package]
+name = "kokoda-discovery"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+mdns-sd = "=0.22.0"
+serde.workspace = true

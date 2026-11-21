@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["apps/host-settings/windows", "crates/app-model", "crates/client", "crates/host", "crates/media", "crates/protocol", "crates/transport", "crates/windows-host", "platforms/windows"]
+members = ["apps/host-settings/windows", "crates/app-model", "crates/client", "crates/discovery", "crates/host", "crates/media", "crates/protocol", "crates/transport", "crates/windows-host", "platforms/windows"]
 
 [workspace.package]
 edition = "2021"

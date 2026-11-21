@@ -59,3 +59,6 @@ Rust 测试在三端 CI 运行，Windows CI 先准备固定版本 FFmpeg SDK 再
 ## Windows / Linux 图形客户端
 
 Windows/Linux 图形开发版现已实现，详见[桌面客户端](desktop-clients.md)，其中包含构建、打包和交互边界。Kokoda.exe／Linux Kokoda 应用用于连接 Windows 主机；KokodaHost.exe 管理共享。客户端自动启动 bridge。正式发版仍需三端原生输入法、发行版兼容和真实显卡验证，macOS 服务端尚未实现。
+
+
+[局域网发现与本机窗口选取](discovery.md)。

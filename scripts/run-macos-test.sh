@@ -1,5 +1,7 @@
 #!/bin/sh
 set -eu
+# Synthetic UI suites must not browse the user's LAN. Live discovery tests opt in explicitly.
+export KOKODA_DISABLE_DISCOVERY=1
 cd "$(dirname "$0")/.."
 suite=${1:?Usage: run-macos-test.sh SUITE [arguments]}
 shift

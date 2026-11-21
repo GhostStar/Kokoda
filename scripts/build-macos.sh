@@ -26,7 +26,8 @@ cat > "$app/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIconFile</key><string>Kokoda.icns</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>LSMinimumSystemVersion</key><string>13.0</string>
-<key>NSLocalNetworkUsageDescription</key><string>Connect to your selected Windows host to stream application windows and input.</string>
+<key>NSBonjourServices</key><array><string>_kokoda._tcp</string></array>
+<key>NSLocalNetworkUsageDescription</key><string>Discover nearby Kokoda hosts and connect to your selected host to stream authorized application windows and input.</string>
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST

@@ -86,3 +86,6 @@ Viewing can expand owned floating/modal windows and excludes transient menus. Re
 `crates/client::manager` supplies shared search ranks and state/action eligibility through the existing C ABI, with `tests/contracts/window-manager.json`. Native session/catalog projection remains in the Mac adapter; Qt adoption is next. Search currently supports case-insensitive exact, prefix and substring matching, including original Chinese text. Fuzzy/pinyin/recent-history ranking, application names/icons, row detail/overflow menus, a standalone quick picker, persistent layouts and the host rule picker remain planned. Current rows use generic icons and an Application Window fallback for empty titles. Unknown catalog roles are retained as selectable rows until a selected window group supplies authoritative roles.
 
 Validation: shared contract tests, synthetic AppKit manager tests in both languages, localization, multi-session, recovery, group, window-management, sizing, input and drag regressions. These checks do not constitute a new live Windows/GPU run; see the [validation record](validation.md).
+
+
+The Windows rule-example picker and Mac LAN discovery are now implemented; see [discovery and host selection](discovery.md). This supersedes the first Mac delivery note about the host picker remaining planned.

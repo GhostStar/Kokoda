@@ -17,6 +17,7 @@ serde.workspace = true
 serde_json.workspace = true
 
 [target.'cfg(windows)'.dependencies]
+kokoda-discovery = { path = "../../../crates/discovery" }
 zeroize = "1"
 kokoda-host = { path = "../../../crates/host", features = ["windows-runtime"] }
 kokoda-platform-windows = { path = "../../../platforms/windows" }

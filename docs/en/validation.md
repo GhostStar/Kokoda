@@ -194,3 +194,12 @@ The new AppKit manager and shared state/action/search contract passed local regr
 This is local UI/model regression, not renewed Windows networking, Qt UI, physical GPU, performance or live IME-candidate acceptance. Live fixture drivers were updated to select through the new manager model but were not rerun. Previous documented limitations remain.
 
 The first CI run exposed a screen-dependent assumption in the legacy group fixture: a requested native move was treated as its actual position. The fixture now checks the actual content position against the layout origin, preserves the no-snap-back assertion, and resizes the parent relative to its current size so smaller CI screens exercise the same behavior.
+
+
+## Host picker and LAN discovery — 2026-11-22
+
+The Windows x64 GUI and host built successfully in the Windows 11 Parallels VM; workspace tests passed on Windows and on Apple Silicon macOS (52 tests on macOS). English/Chinese discovery, manager and localization AppKit suites passed, and 236 locale keys passed parity checks. The signed Mac application was rebuilt.
+
+The interactive Windows GUI regression passed against isolated native forms: searching the local catalog, a title change appearing through automatic refresh without losing selected identity, direct versus owned preview (excluding an independent same-process sibling), adding the combined executable/title rule, default discovery opt-in, password setup/rotation/rejection, OPAQUE/TLS loopback, empty-default sharing, preview, full scope, restart, normal exit and forced-exit child cleanup. Chinese host/picker screenshots were inspected at the VM's display scale; they contain only synthetic test content.
+
+The Mac browser discovered the actual Windows GUI fixture's IPv4 endpoint using the new mDNS component. Local advertisement/goodbye lifecycle also passed. An initial 12-second local discovery attempt timed out; the system Bonjour browser observed the synthetic announcement, and the subsequent lifecycle and two-machine runs passed. This is not a guaranteed discovery-latency benchmark. No firewall rules were changed. Temporary fixture windows, credentials and scheduled task were cleaned up; the test VM was returned to its prior suspended state. This round does not certify physical GPU performance, routed/VPN multicast, or Windows/Linux discovery UI.
