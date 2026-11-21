@@ -1,0 +1,40 @@
+name: Desktop clients
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native development dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build qt6-base-dev qt6-base-dev-tools qt6-wayland libavcodec-dev libavutil-dev libswscale-dev pkg-config xvfb xauth dpkg-dev
+      - run: scripts/build-desktop-linux.sh
+      - name: X11 window behavior
+        run: xvfb-run -a target/desktop-linux/kokoda-desktop-tests
+      - run: scripts/package-desktop-linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kokoda-Client-Linux-amd64
+          path: dist/Kokoda-Client-Linux-*
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Qt and FFmpeg SDKs
+        shell: pwsh
+        run: |
+          python -m pip install aqtinstall==3.3.0
+          python -m aqt install-qt windows desktop 6.8.3 win64_msvc2022_64 --archives qtbase --outputdir .tools/qt
+          python scripts/prepare-ffmpeg.py
+      - name: Build, test and package
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=x64
+          powershell -ExecutionPolicy Bypass -File scripts/build-desktop-windows.ps1 -QtRoot "%CD%\.tools\qt\6.8.3\msvc2022_64"
+          if errorlevel 1 exit /b 1
+          powershell -ExecutionPolicy Bypass -File scripts/package-desktop-windows.ps1 -BinaryDirectory "%CD%\target\desktop-windows" -QtRoot "%CD%\.tools\qt\6.8.3\msvc2022_64" -FfmpegSdk "%CD%\.tools\ffmpeg\windows-x64"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kokoda-Client-Windows-x64
+          path: dist/Kokoda-Client-Windows-*.zip

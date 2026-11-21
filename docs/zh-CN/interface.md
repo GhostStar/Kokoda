@@ -15,3 +15,5 @@
 [已实现的 Windows 主机 GUI 与当前边界](development.md#windows-主机-gui)。上文的完整交互仍为产品目标。
 
 [窗口角色与远端操作](window-management.md)。
+
+Windows/Linux 使用画面上方紧凑的模式选择器，macOS 使用标题栏附件。Wayland 最大化尺寸由合成器决定。当前平台差异与未完成的一致性项目见[桌面客户端](desktop-clients.md)。

@@ -31,3 +31,5 @@ Kokoda 客户端与服务端使用自己的协议，围绕一对一连接、窗�
 [窗口角色与远端操作](window-management.md)。
 
 [应用图标来源与生成](../../packaging/icons/README.md)。
+
+Windows/Linux 图形客户端现使用 Qt Widgets。Windows 解码采用 FFmpeg D3D11VA 探测及软件路径，Linux 使用 VAAPI 探测及软件路径，均由 Qt 展示。共享前端和平台差异详见[桌面客户端](desktop-clients.md)。

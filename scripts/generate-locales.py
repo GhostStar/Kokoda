@@ -11,6 +11,8 @@ for base in ['apps/macos','platforms/macos']:
   used.update(re.findall(r'(?:L|NSLocalizedString)\("([^"]+)"',file.read_text(encoding='utf-8')))
 for file in (root/'apps/host-settings').rglob('*.rs'):
  used.update(re.findall(r'\bt\("([^"]+)"', file.read_text(encoding='utf-8')))
+for file in (root/'apps/desktop/src').rglob('*.cpp'):
+ used.update(re.findall(r'\btext\("([^"]+)"', file.read_text(encoding='utf-8')))
 if used != set(catalogs['en']):raise SystemExit(f'Locale key coverage differs: {used ^ set(catalogs["en"])}')
 outputs={}
 for lang,folder in [('en','en'),('zh-CN','zh-Hans')]:

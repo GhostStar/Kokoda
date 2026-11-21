@@ -8,9 +8,9 @@
 
 | 目录 | 职责 | 当前实现 |
 |---|---|---|
-| apps/desktop/src、locales | 共用页面及翻译 | 112 个双语文案键；共享视觉界面待实现 |
-| apps/macos、windows、linux | 启动、菜单和原生 UI 集成 | Mac 开发运行器已接入；Windows／Linux 预留 |
-| apps/host-settings | 本机管理界面 | 预留 |
+| apps/desktop/src、locales | 共用页面及翻译 | Qt Windows/Linux 共享界面及标准双语资源 |
+| apps/macos、windows、linux | 启动、菜单和原生 UI 集成 | Mac AppKit 与 Windows/Linux Qt 开发运行器 |
+| apps/host-settings | 本机管理界面 | Windows 原生主机界面；macOS 预留 |
 | crates/app-model | 窗口事实、身份、输入、画质和格式 | 共享 Rust 模型；应用分组不能充当授权策略 |
 | crates/client | 窗口生命周期、全局画质及 UI 动作 | 已测试的控制器、C 接口与网络桥接；调度／恢复继续迁移 |
 | crates/host | 接入、会话及授权调度 | 接入槽位与迁入的 Windows 窗口组／会话运行时；正式授权待实现 |
@@ -19,13 +19,13 @@
 | crates/media | 帧、采集／播放接口与格式交集 | 共享接口、大小限制和后端错误边界；适配层完整接入待完善 |
 | platforms/windows | 窗口元数据、采集、编码、输入与剪贴板 | 原生 Cargo 包，不依赖传输层 |
 | platforms/macos | 播放、窗口呈现、输入法及剪贴板图片 | 原生 Swift 源码，由 Mac 运行器编译 |
-| platforms/linux | 原生播放及集成 | 预留 |
+| platforms/linux | 原生播放及集成 | Qt X11/Wayland 所属关系适配；共用 FFmpeg 解码 |
 | crates/windows-host、macos-host | 主机可执行入口组装 | Windows 命令行已接入；macOS 预留 |
 | tests/contracts、fixtures、platform、e2e | 共用样例、合成窗口、原生与联网回归 | 已接入测试；Rust 回归也随 crate 保存 |
 | packaging、scripts | 分发与构建工具 | 开发构建／签名／SDK 脚本；发行安装器待实现 |
 | docs/en、docs/zh-CN | 对齐的产品与工程文档 | 同步维护 |
 
-未实现目录保留说明或 `.gitkeep`，有实现后才加入构建目标。Windows／Linux UI 工具包仍需通过输入法、多窗口和视频表面验证。
+未实现目录保留说明或 `.gitkeep`，有实现后才加入构建目标。Windows/Linux 使用 Qt 6 Widgets，平台解码与窗口所属关系保留在 platforms。
 
 ## 依赖与模块边界
 
@@ -48,3 +48,5 @@ RustDesk 分帧代码保留上游归属；FFmpeg 通过公开 API 提供厂商�
 运行 `cargo test --workspace --locked` 和 `python3 tests/check-locales.py`。CI 在 Windows、macOS、Linux 测试，Windows 才编译运行其原生后端。Mac 原生测试及真实网络驱动详见[开发说明](development.md)。[验证记录](validation.md)
 
 Windows 原生主机设置入口已实现在 `apps/host-settings/windows`，生成 `KokodaHost.exe`。它负责本地配置与子主机进程生命周期，授权仍由 `kokoda-host` 执行。
+
+Windows/Linux 现采用 Qt 6 Widgets，界面和会话调度位于 apps/desktop/src，原生所属关系在 platforms/{windows,linux}/client，异步 FFmpeg 解码在 platforms/common/client。详见[桌面客户端](desktop-clients.md)。

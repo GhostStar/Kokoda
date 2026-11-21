@@ -16,7 +16,7 @@ Each frontend sends user actions to kokoda-client, which owns the connection epo
 
 | Platform | Planned host capture | Planned client playback |
 |---|---|---|
-| Windows | WGC bound to the authorized HWND, D3D11 textures and hardware encoding where available | Media Foundation decode to D3D11 with software fallback |
+| Windows | WGC bound to the authorized HWND, D3D11 textures and hardware encoding where available | FFmpeg D3D11VA probing with software fallback; Qt presentation |
 | macOS | Phase two: ScreenCaptureKit filtered to the authorized window | VideoToolbox decode and native window presentation |
 | Linux | Client only in phase one | FFmpeg with runtime VA-API probing and software fallback, toolkit presentation under Wayland/X11 |
 
@@ -31,3 +31,5 @@ Kokoda clients and hosts use their own protocol for one-to-one connections, wind
 [Window roles and remote operations](window-management.md).
 
 [Application icon sources and generation](../../packaging/icons/README.md).
+
+The Windows/Linux GUI adapter is implemented with Qt Widgets. Its shared frontend and platform differences are specified in [desktop clients](desktop-clients.md).

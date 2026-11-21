@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Kokoda
+Comment=Use applications on your Windows host
+Comment[zh_CN]=操作 Windows 主机上的应用窗口
+Exec=Kokoda
+Icon=kokoda
+Terminal=false
+Categories=Network;RemoteAccess;
+StartupWMClass=Kokoda

@@ -8,24 +8,24 @@ Share interaction decisions across clients, with platform-specific capture, play
 
 | Directory | Responsibility | Current implementation |
 |---|---|---|
-| apps/desktop/src, locales | Shared screens and translations | 112 bilingual keys; shared visual screens pending |
-| apps/macos, windows, linux | Launchers, menus and native UI integration | macOS development runner; Windows/Linux reserved |
-| apps/host-settings | Local management UI | Reserved |
+| apps/desktop/src, locales | Shared screens and translations | Shared Qt Windows/Linux screens and canonical bilingual resources |
+| apps/macos, windows, linux | Launchers, menus and native UI integration | AppKit macOS and Qt Windows/Linux development runners |
+| apps/host-settings | Local management UI | Windows native host GUI; macOS reserved |
 | crates/app-model | Window facts, identity, input, quality and format | Shared Rust model; application grouping is not an authorization policy |
 | crates/client | Viewer lifecycle, global quality and UI effects | Tested controller, C ABI, network bridge; native scheduling/recovery migration continues |
 | crates/host | Admission, sessions, authorization orchestration | Admission plus migrated Windows group/session runtime; product authorization pending |
 | crates/protocol | Kokoda messages, limits and validation | Development routing/input validation and quality profiles; full typed wire schema/version negotiation pending |
-| crates/transport | Encryption, framing, timeouts and backpressure | Pinned TLS/token development pairing, bounded framing, partial I/O handling |
+| crates/transport | Encryption, framing, timeouts and backpressure | TLS 1.3/OPAQUE password connections, legacy test pairing, bounded framing and partial I/O handling |
 | crates/media | Frames, capture/player contracts and format intersection | Shared interfaces, limits and backend error boundary; full adapter adoption pending |
 | platforms/windows | Window metadata, capture, encoding, input and clipboard | Native Cargo package, no transport dependency |
 | platforms/macos | Playback, viewer surfaces, IME and clipboard images | Native Swift sources compiled by the macOS runner |
-| platforms/linux | Native playback and integration | Reserved |
+| platforms/linux | Native playback and integration | Qt X11/Wayland ownership adapter; common FFmpeg decoder |
 | crates/windows-host, macos-host | Host executable composition | Windows CLI; macOS reserved |
 | tests/contracts, fixtures, platform, e2e | Shared vectors, synthetic windows, native and network regressions | Implemented suites; Rust tests also live with their crates |
 | packaging, scripts | Distribution and build tooling | Development build/signing/SDK scripts; release installers pending |
 | docs/en, docs/zh-CN | Aligned product and engineering documentation | Maintained together |
 
-Keep unimplemented directories documented or tracked with `.gitkeep`. Add build targets when implementations exist. Native UI toolkit selection for Windows/Linux remains subject to IME, multi-window and video-surface verification.
+Keep unimplemented directories documented or tracked with `.gitkeep`. Add build targets when implementations exist. Windows/Linux use Qt 6 Widgets; platform decoding and ownership adapters stay under `platforms`. See [desktop clients](desktop-clients.md) for implementation boundaries.
 
 ## Dependencies and module boundaries
 

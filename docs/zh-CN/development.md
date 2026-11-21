@@ -16,7 +16,7 @@
 
 开发主机通过 `--serve-development 地址 身份目录` 默认提供空的只读目录。加 `--sharing-policy 文件` 启用[指定窗口查看](restricted-sharing.md)，或显式加 `--allow-all-windows` 对全部应用窗口启用完整开发控制。配对仍采用手动传递证书和随机令牌，正式产品授权体系尚未完成。
 
-限时配对码、设备批准／撤销、受限窗口交互控制、策略热更新、绑定窗口代次的发现列表、明确的主机忙响应和服务端设置界面尚待实现。全部窗口模式仍沿用原型应用归属规则；受限查看按主机规则过滤窗口组并禁用输入/剪贴板。应用归属规则本身不能作为隐私隔离边界。Windows／Linux 图形客户端及 macOS 服务端尚待接入，目前不宣称达到首版发布条件。
+限时配对码、设备批准／撤销、受限窗口交互控制、策略热更新、绑定窗口代次的发现列表、明确的主机忙响应和服务端设置界面尚待实现。全部窗口模式仍沿用原型应用归属规则；受限查看按主机规则过滤窗口组并禁用输入/剪贴板。应用归属规则本身不能作为隐私隔离边界。Windows/Linux 图形开发客户端现已接入，macOS 服务端尚待实现，目前不宣称达到首版发布条件。
 
 媒体接口还需继续完善：当前 Windows 工作线程使用原生持有帧类型，Mac 使用原生解码器。继续保持 Kokoda 自有端点协议，禁止将窗口采集回退扩大为桌面采集。
 
@@ -48,10 +48,14 @@ powershell -ExecutionPolicy Bypass -File scripts/package-windows.ps1 -BinaryDire
 
 Rust 测试在三端 CI 运行，Windows CI 先准备固定版本 FFmpeg SDK 再编译原生适配层。`tests/check-locales.py` 检查文案覆盖、格式参数和生成资源一致性。原生回归通过 `scripts/run-macos-test.sh 测试名` 运行，使用临时测试程序及隔离窗口。网络测试窗口位于 `tests/fixtures`，`tests/e2e` 接收显式地址、测试凭据和结果文件路径。
 
-硬件加速可用性必须与编译／虚拟机测试分开记录。正式首版仍需完成 Windows／Linux 图形客户端和实机显卡验证。[本轮验证记录](validation.md)
+硬件加速可用性必须与编译／虚拟机测试分开记录。正式首版仍需三端原生输入法、发行版兼容及实机显卡验证。[本轮验证记录](validation.md)
 
 ## Windows 主机 GUI
 
 双击 `KokodaHost.exe`，设置连接密码、选择共享范围后开始共享。Mac 输入地址和密码即可；两端需一起更新，正常使用不再需要配对文件。凭据保存、认证方式、迁移及边界见[密码连接](password-authentication.md)。
 
 原生入口位于 `apps/host-settings/windows`，打开时保持停止，提供规则编辑/预览及局域网地址，并通过 Windows Job Object 管理子主机。关闭或结束 GUI 会停止该主机，最小化继续运行。更改范围或密码前先停止。原生回归 `tests/platform/windows/HostGui.Tests.ps1` 在已登录 Windows 桌面用隔离测试目录运行。
+
+## Windows / Linux 图形客户端
+
+Windows/Linux 图形开发版现已实现，详见[桌面客户端](desktop-clients.md)，其中包含构建、打包和交互边界。Kokoda.exe／Linux Kokoda 应用用于连接 Windows 主机；KokodaHost.exe 管理共享。客户端自动启动 bridge。正式发版仍需三端原生输入法、发行版兼容和真实显卡验证，macOS 服务端尚未实现。

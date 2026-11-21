@@ -16,7 +16,7 @@ The first implementation slice migrates the verified Windows-host/macOS-client p
 
 The explicit legacy development host defaults to an empty read-only catalog with `--serve-development ADDRESS IDENTITY`. Add `--sharing-policy FILE` for [selected-window viewing](restricted-sharing.md), or explicitly add `--allow-all-windows` for full control of all application windows. This legacy fixture path uses a manually transferred certificate and random token. Normal GUI connections use [password authentication](password-authentication.md). The explicit flag is local consent for development access; it is not the product's restricted sharing mode.
 
-Expiring pairing codes, per-device approval/revocation, interactive restricted sharing, live policy updates, generation-bound discovery, explicit busy responses are pending. All-window mode retains the prototype's application-membership rules. Restricted viewing filters these groups by host policy and disables input/clipboard. Do not treat application grouping alone as privacy isolation. Windows/Linux GUI clients and macOS hosting are pending. No first release is claimed.
+Expiring pairing codes, per-device approval/revocation, interactive restricted sharing, live policy updates, generation-bound discovery, explicit busy responses are pending. All-window mode retains the prototype's application-membership rules. Restricted viewing filters these groups by host policy and disables input/clipboard. Do not treat application grouping alone as privacy isolation. Windows/Linux GUI development clients are now implemented; macOS hosting remains pending. See [desktop clients](desktop-clients.md). No first release is claimed.
 
 The media interfaces are reserved for a fuller adapter contract. The working Windows worker uses its native owned-frame type; macOS playback uses its native decoder. Do not introduce RustDesk endpoint compatibility or broaden a capture fallback to the desktop.
 
@@ -48,10 +48,14 @@ For an isolated test, generate a **new** identity with `kokoda-windows-host.exe 
 
 Rust tests run on all three CI platforms; Windows CI prepares the pinned FFmpeg SDK before compiling the native adapter. `tests/check-locales.py` checks translation coverage, format arguments and generated-resource parity. Native regressions run using `scripts/run-macos-test.sh SUITE` with temporary executables and isolated test windows. Network fixtures live in `tests/fixtures`; end-to-end drivers in `tests/e2e` accept explicit addresses, credentials and result paths.
 
-Hardware acceleration availability must be reported separately from compilation and VM validation. First-release acceptance still requires Windows/Linux GUI clients and real GPU coverage. [Current validation record](validation.md)
+Hardware acceleration availability must be reported separately from compilation and VM validation. First-release acceptance still requires native IME, distribution and real GPU coverage for the three GUI clients. [Current validation record](validation.md)
 
 ## Windows host GUI
 
 Double-click `KokodaHost.exe`. Set a connection password, select a sharing scope and start sharing. On Mac, enter the address and password. Both endpoints must be updated; normal operation no longer uses pairing files. See [password connections](password-authentication.md) for credential storage, authentication, migration and limitations.
 
 The native runner lives in `apps/host-settings/windows`. It opens stopped, offers rule editing/preview and LAN endpoints, and manages its child host through a Windows job object. Closing or terminating the GUI stops that host; minimizing keeps it running. Stop before editing scope or password. Run the native regression `tests/platform/windows/HostGui.Tests.ps1` in a signed-in Windows desktop with isolated test/result directories.
+
+## Windows / Linux client GUI
+
+Build instructions, package contents and interaction boundaries are in [desktop clients](desktop-clients.md). `Kokoda.exe` / the Linux Kokoda application connects to a Windows host; `KokodaHost.exe` manages sharing. The client launches its bridge automatically.

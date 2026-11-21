@@ -149,3 +149,37 @@ Native ViewerSizing, Input, WindowManagement, Group, MultiSession and Session te
 The actual Mac → Parallels Windows five-viewer test passed unchanged host bounds under local scaling, title-bar-selected popup resizing changing the host dimensions, no padding after local resize/zoom, local minimize/restore and normal/panel zoom in host mode, modal close/restore with bounded hidden-frame feedback, separate child-process windows and surviving independent siblings. Temporary credentials, host/fixture processes and the scoped firewall rule were removed, and the VM was suspended. These are synthetic Windows VM tests, not a physical QQ/WeChat or multi-monitor hardware certification.
 
 Testing exposed an AppKit zoom crash after assigning a zero content aspect ratio. The implementation cancels the ratio using unit resize increments instead, consistent with Apple's [aspect-ratio reset guidance](https://developer.apple.com/documentation/appkit/nswindow/aspectratio). Native test launches also ignore saved window state so a previous failing assertion cannot leave subsequent tests waiting at a restore-windows prompt. The rebuilt Mac bundle passed strict signature verification; no host protocol or binary change is needed for this update. The user's running client is not terminated; quit and reopen it to load the new executable.
+
+## Windows / Linux GUI clients (2026-11-21)
+
+The Qt client passed **16 cases** on Windows 11 x64 (MSVC/Qt 6.8.3 under Parallels)
+and **16 cases** on Ubuntu 26.04 ARM64 (Qt 6.10.2, FFmpeg 8.0.1, X11/Xvfb), including
+real password connections to the isolated Windows host. The live case observed
+five authorized application windows, video/image quality changes without replacing
+viewers, local proportional resize with unchanged host bounds, opted-in host resize,
+local close/reopen, committed Chinese/emoji text, text paste and authenticated
+reconnection with preserved geometry. Linux additionally verified remote text and
+PNG clipboard transfer between separate operating systems. Linux used a temporary
+Mac loopback relay because the machine's global proxy prevented direct VM routing;
+this validates the real protocol, not direct-LAN latency/performance.
+
+Wayland/Weston headless passed **15 cases**, with the optional live case skipped.
+It covers native window behavior, composition events, focus release, zoom and
+read-only handling, core ABI/loading, bilingual UI and repeated non-aligned H.264
+frames. Both English and Chinese UI screenshots were inspected. CTest offscreen
+also passed. The Mac Rust client/bridge tests passed (6 cases); localization checks
+passed for 184 shared keys and generated native resources.
+
+The new regressions found and fixed two implementation defects: tightly allocated
+Qt RGBA memory did not satisfy FFmpeg conversion padding, and clipboard polling
+could run after authentication but before application resume, invalidating the
+session. FFmpeg-owned aligned buffers and resumed-session gating now cover these.
+Fixture commands now include observed acknowledgments so VM file-sync delays do
+not masquerade as input failures.
+
+Physical GPU decoding/performance, real Windows IME candidate windows, Linux
+IBus/Fcitx integration, Wayland clipboard over a live host, HDR/color fidelity and
+multiple display/DPI transitions still require hardware/user validation. VM tests
+do not certify RTX/AMD/Intel acceleration. The Qt video presenter currently copies
+GPU output back to CPU; it is not a zero-copy renderer. File transfer/audio remain
+unimplemented. See [desktop clients](desktop-clients.md) for build and limits.

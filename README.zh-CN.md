@@ -18,7 +18,7 @@
 
 [产品代码结构](docs/zh-CN/code-structure.md)
 
-首批 Windows 服务端／macOS 客户端开发链路已接入，参见[构建说明与实现边界](docs/zh-CN/development.md)。首版仍需完成 Windows／Linux 图形客户端及正式授权流程。
+首批 Windows 服务端／macOS 客户端开发链路已接入，参见[构建说明与实现边界](docs/zh-CN/development.md)。Windows/Linux 图形开发客户端也已接入，参见[桌面客户端构建与使用](docs/zh-CN/desktop-clients.md)。正式授权、原生输入法及硬件验收仍在进行。
 
 [指定窗口查看配置](docs/zh-CN/restricted-sharing.md)
 

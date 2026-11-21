@@ -1,7 +1,19 @@
 # Shared desktop UI · 共享桌面界面
 
-`locales` contains the canonical bilingual resources. Run `python3 scripts/generate-locales.py` after editing them; CI verifies parity. The shared Rust controller and C ABI live in `crates/client`. macOS uses that ABI for confirmed viewer state and global quality. Shared visual screens and the remaining cross-platform connection workflows are still being implemented.
+`src` implements the shared Qt 6 Widgets Windows/Linux client: connection UI,
+application sessions, window behavior, input, clipboard and recovery scheduling.
+It loads the Rust core C ABI in `crates/client` for lifecycle/quality and manages
+`kokoda-bridge` as a background child. macOS retains its AppKit runner and uses
+the same Rust ABI. Native codec/ownership integrations stay in `platforms`.
 
-`locales` 存放统一的中英文文案，修改后运行 `python3 scripts/generate-locales.py`，CI 校验生成结果。共享 Rust 控制器及 C 接口位于 `crates/client`，Mac 已用于确认后的窗口状态与全局画质。共享视觉界面及其余跨平台连接流程仍在实现中。
+`src` 实现 Windows/Linux 共用的 Qt 6 Widgets 客户端，包括连接界面、应用
+会话、窗口行为、输入、剪贴板及恢复调度。通过 crates/client 的 Rust C ABI
+使用生命周期/画质能力，并自动管理后台 bridge。Mac 保留 AppKit 运行器和
+同一 Rust ABI。原生解码和窗口所属关系适配留在 platforms。
 
-Platform runners live in `apps/{macos,windows,linux}`, with native media/input adapters in `platforms`. [Current implementation](../../docs/en/development.md) · [当前实现](../../docs/zh-CN/development.md)
+`locales` contains canonical English/Chinese resources. Run
+`python3 scripts/generate-locales.py` after editing; CI verifies native resource
+parity. `locales` 是标准中英文资源，修改后执行生成脚本，CI 检查原生资源一致性。
+
+[Build, interactions and limits](../../docs/en/desktop-clients.md) ·
+[构建、交互及限制](../../docs/zh-CN/desktop-clients.md)

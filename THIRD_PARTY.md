@@ -50,3 +50,29 @@ those modules is copied or linked, and no RustDesk interoperability is added.
 
 调度设计参考 RustDesk 上述版本的异步输入、独立解码、消费反馈与自适应思路。
 上游许可为 AGPL-3.0；Kokoda 按自身窗口授权及协议独立实现，未复制或链接上述模块。
+
+## Windows / Linux desktop clients
+
+The Qt Widgets frontend links Qt Core, Gui and Widgets dynamically. Windows
+builds use the unmodified Qt 6.8.3 MSVC 2022 x64 SDK; Linux builds use distribution
+Qt 6 (minimum 6.4). Qt is Copyright The Qt Company Ltd. and its contributors;
+these libraries are used under LGPL-3.0. License texts, including GPL-3.0 and the
+Qt exception, are in `packaging/licenses/qt` and included in both client packages.
+Libraries remain separate and replaceable with ABI-compatible builds. Qt plugins
+retain their embedded licensing metadata. Qt source and its bundled third-party
+notices: https://download.qt.io/archive/qt/6.8/6.8.3/submodules/qtbase-everywhere-src-6.8.3.tar.xz
+; https://github.com/qt/qtbase/tree/v6.8.3/LICENSES . Linux system packages supply
+their matching source and notices through the distribution package manager.
+
+The shared asynchronous decoder uses FFmpeg's public libavcodec, libavutil and
+libswscale APIs; no RustDesk decoder source is copied. Windows uses the same
+pinned LGPL FFmpeg SDK as the host, with the additional swscale DLL. Linux uses
+system FFmpeg (6.1 on the Ubuntu 24.04 CI target; 8.0 in the local ARM64 VM). Decoder probes use D3D11VA on
+Windows and VAAPI on Linux; no vendor driver is redistributed. `BUILD.txt` in
+packages records the Qt version or Linux dependency requirements.
+
+Windows/Linux 客户端动态链接 Qt Core、Gui、Widgets，按 LGPL-3.0 使用，
+未修改上游 Qt 源码。许可证随包分发，动态库可替换；上面的官方源码包含
+Qt 内部第三方声明。Linux 通过发行版提供匹配的源码与声明。解码器调用
+FFmpeg 公共 API，未复制 RustDesk 解码源码；Windows 额外携带 swscale
+动态库，Linux 使用系统库，不打包显卡驱动。

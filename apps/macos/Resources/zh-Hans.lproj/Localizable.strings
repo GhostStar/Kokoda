@@ -17,6 +17,15 @@
 "connection.connect" = "连接";
 "connection.disconnect" = "断开";
 "connection.password" = "连接密码";
+"desktop.available_windows" = "可用窗口";
+"desktop.clipboard_shortcuts" = "文字与图片剪贴板：Ctrl+C / Ctrl+V / Ctrl+X";
+"desktop.connection_failed" = "连接失败。";
+"desktop.core_missing" = "缺少客户端组件，请完整解压 Kokoda 安装包。";
+"desktop.decode_failed" = "此窗口解码失败，请结束观看后重新打开。";
+"desktop.frame_stats" = "%1 帧/秒 · %2×%3";
+"desktop.open_apps" = "已打开的应用";
+"desktop.reconnecting" = "连接中断，正在重新连接…";
+"desktop.search" = "搜索已允许的窗口";
 "development.notice" = "共享范围由主机设置。指定窗口仅供查看，完整控制需选择全部应用窗口。此 Mac 的密码仅在程序运行期间保存在内存中。";
 "diagnostics.ago" = "%.1f 秒前";
 "diagnostics.bridge" = "\n连接桥：%@";
@@ -30,8 +39,8 @@
 "diagnostics.title" = "最近断线诊断";
 "dialog.cancel" = "取消";
 "dialog.close" = "关闭";
-"display.adaptive" = "分辨率跟随 Mac 窗口（含 Retina 倍率）";
-"display.adaptive_tip" = "按 Mac 画面区域的实际像素调整编码分辨率，最高 3840×2160，不超过远端原图。取消后使用档位固定宽度。";
+"display.adaptive" = "分辨率跟随本地窗口（包含显示缩放）";
+"display.adaptive_tip" = "按本地画面区域的实际像素调整编码分辨率，最高 3840×2160，不超过远端原图。取消后使用档位固定宽度。";
 "encoder.hardware" = "硬件编码";
 "encoder.image" = "图像编码";
 "encoder.software" = "软件编码";
@@ -62,7 +71,7 @@
 "host.exited" = "主机进程已退出，请查看下方详情。";
 "host.failed" = "共享启动失败或已中断";
 "host.heading" = "共享此电脑上的应用窗口";
-"host.instructions" = "在 Mac 输入上方地址和连接密码，无需复制配对文件。关闭此窗口即停止共享；修改密码前请先停止共享。";
+"host.instructions" = "在客户端输入上方地址和连接密码，无需复制配对文件。关闭此窗口即停止共享；修改密码前请先停止共享。";
 "host.invalid_executable" = "请选择存在的应用程序完整路径。";
 "host.invalid_port" = "请输入 1 到 65535 之间的端口。";
 "host.invalid_rule" = "请填写程序路径或标题文本。条件不可为空白，最多可添加 128 条规则。";
@@ -122,7 +131,7 @@
 "quality.original_short" = "原版 JPEG / PNG";
 "quality.smooth" = "H.264 流畅 · 30 FPS / 2 Mbps";
 "quality.smooth_short" = "H.264 流畅";
-"quality.tip" = "更改后应用于所有已打开的应用和新窗口。FPS 是上限；支持的主机会为更大的 Retina 画面增加码率预算。";
+"quality.tip" = "更改后应用于所有已打开的应用和新窗口。FPS 是上限；支持的主机会为更大的高分屏画面增加码率预算。";
 "quality.updated" = "画质已更新，无需重新打开窗口。";
 "quality.updating" = "正在更新所有应用的画质…";
 "sharing.read_only" = "只读共享：输入和剪贴板已禁用";
@@ -166,7 +175,7 @@
 "window.title" = "Kokoda · 实验版";
 "windows.already_open" = "该窗口已经打开。";
 "windows.group_limit" = "窗口较多，当前最多显示 16 个窗口";
-"windows.include_app" = "包含同一应用的窗口（资料卡、弹窗）";
+"windows.include_app" = "包含此应用的关联窗口";
 "windows.open" = "打开窗口";
 "windows.refresh" = "刷新窗口";
 "windows.session_limit" = "当前最多同时打开 8 个应用会话。";

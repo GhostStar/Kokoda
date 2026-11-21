@@ -17,6 +17,15 @@
 "connection.connect" = "Connect";
 "connection.disconnect" = "Disconnect";
 "connection.password" = "Connection password";
+"desktop.available_windows" = "Available windows";
+"desktop.clipboard_shortcuts" = "Text and image clipboard: Ctrl+C / Ctrl+V / Ctrl+X";
+"desktop.connection_failed" = "Connection failed.";
+"desktop.core_missing" = "Client components are missing. Extract the complete Kokoda package.";
+"desktop.decode_failed" = "Unable to decode this window. End viewing and open it again.";
+"desktop.frame_stats" = "%1 FPS · %2×%3";
+"desktop.open_apps" = "Open applications";
+"desktop.reconnecting" = "Connection interrupted. Reconnecting…";
+"desktop.search" = "Search permitted windows";
 "development.notice" = "Sharing scope is configured on the host. Selected windows are view-only; full control requires All application windows. Passwords stay in memory on this Mac until you quit.";
 "diagnostics.ago" = "%.1f s ago";
 "diagnostics.bridge" = "\nBridge: %@";
@@ -30,7 +39,7 @@
 "diagnostics.title" = "Recent Connection Diagnostics";
 "dialog.cancel" = "Cancel";
 "dialog.close" = "Close";
-"display.adaptive" = "Match viewer resolution (including Retina scaling)";
+"display.adaptive" = "Match viewer resolution (including display scaling)";
 "display.adaptive_tip" = "Use viewer backing pixels, up to 3840×2160 and the source resolution. Disable to use the preset width.";
 "encoder.hardware" = "Hardware encoder";
 "encoder.image" = "Image encoder";
@@ -62,7 +71,7 @@
 "host.exited" = "The host process stopped. Check the details below.";
 "host.failed" = "Sharing could not start or was interrupted";
 "host.heading" = "Share application windows from this PC";
-"host.instructions" = "On Mac, enter an address above and the connection password. No pairing files are needed. Closing this window stops sharing. Stop sharing before changing the password.";
+"host.instructions" = "On the client, enter an address above and the connection password. No pairing files are needed. Closing this window stops sharing. Stop sharing before changing the password.";
 "host.invalid_executable" = "Choose an existing application using its full path.";
 "host.invalid_port" = "Enter a port from 1 to 65535.";
 "host.invalid_rule" = "Provide a program path or title text. Empty conditions are not allowed; the limit is 128 rules.";
@@ -122,7 +131,7 @@
 "quality.original_short" = "Original JPEG / PNG";
 "quality.smooth" = "H.264 Smooth · 30 FPS / 2 Mbps";
 "quality.smooth_short" = "H.264 Smooth";
-"quality.tip" = "Applies to every open and new viewer. FPS is an upper limit. Supported hosts increase the bitrate budget for larger Retina streams.";
+"quality.tip" = "Applies to every open and new viewer. FPS is an upper limit. Supported hosts increase the bitrate budget for larger high-DPI streams.";
 "quality.updated" = "Quality updated without reopening windows.";
 "quality.updating" = "Updating video quality for all apps…";
 "sharing.read_only" = "View only — input and clipboard are disabled";
@@ -166,7 +175,7 @@
 "window.title" = "Kokoda · Preview";
 "windows.already_open" = "This window is already open.";
 "windows.group_limit" = "Showing up to sixteen windows in this application group";
-"windows.include_app" = "Include related application windows and dialogs";
+"windows.include_app" = "Include related windows from this application";
 "windows.open" = "Open Window";
 "windows.refresh" = "Refresh Windows";
 "windows.session_limit" = "Up to eight application sessions can be open.";

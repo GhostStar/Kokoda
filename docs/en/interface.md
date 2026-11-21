@@ -15,3 +15,5 @@ The host opens on Sharing Scope. Preview matching windows locally, save to apply
 [Implemented Windows host GUI and its current limits](development.md#windows-host-gui). The lifecycle and sharing interactions described above remain the product target.
 
 [Window roles and remote operations](window-management.md).
+
+Windows/Linux use a compact selector above the canvas rather than an AppKit title-bar accessory. Wayland maximized geometry is compositor-owned. Current platform differences and unfinished parity items: [desktop clients](desktop-clients.md).

@@ -18,7 +18,7 @@ License: [AGPL-3.0-only](LICENSE).
 
 [Product code structure](docs/en/code-structure.md)
 
-The first Windows-host/macOS-client development runtime is available in source. See the [build guide and implementation boundaries](docs/en/development.md). The first release still requires Windows/Linux GUI clients and product authorization.
+The first Windows-host/macOS-client development runtime is available in source. See the [build guide and implementation boundaries](docs/en/development.md). Windows and Linux GUI development clients are also available; see [desktop client build and usage](docs/en/desktop-clients.md). Release authorization, native IME and hardware acceptance remain in progress.
 
 [Selected-window viewing configuration](docs/en/restricted-sharing.md)
 
