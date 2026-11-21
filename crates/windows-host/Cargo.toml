@@ -1,0 +1,12 @@
+[package]
+name = "kokoda-windows-host"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+kokoda-host = { path = "../host", features = ["windows-runtime"] }
+kokoda-platform-windows = { path = "../../platforms/windows" }
+kokoda-app-model = { path = "../app-model" }
+kokoda-transport = { path = "../transport" }
+serde_json.workspace = true

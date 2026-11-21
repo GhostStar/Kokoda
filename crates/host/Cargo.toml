@@ -1,0 +1,23 @@
+[package]
+name = "kokoda-host"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[features]
+windows-runtime = ["dep:kokoda-platform-windows", "dep:kokoda-transport", "dep:kokoda-app-model", "dep:kokoda-protocol", "dep:base64", "dep:serde_json"]
+
+[target.'cfg(windows)'.dependencies]
+kokoda-platform-windows = { path = "../../platforms/windows", optional = true }
+kokoda-transport = { path = "../transport", optional = true }
+kokoda-app-model = { path = "../app-model", optional = true }
+kokoda-protocol = { path = "../protocol", optional = true }
+base64 = { version = "0.22", optional = true }
+serde_json = { workspace = true, optional = true }
+
+[dependencies]
+serde.workspace = true
+unicode-normalization = "0.1"
+
+[dev-dependencies]
+serde_json.workspace = true

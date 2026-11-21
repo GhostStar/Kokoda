@@ -1,0 +1,8 @@
+[package]
+name = "kokoda-media"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+kokoda-app-model = { path = "../app-model" }

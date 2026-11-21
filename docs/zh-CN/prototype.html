@@ -1,0 +1,39 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kokoda · 共享设置预览</title>
+<style>
+:root{font:16px system-ui;color:#172d31;background:#edf2ee}main{max-width:960px;margin:6vh auto;padding:24px}header{border-bottom:2px solid #254948;margin-bottom:24px}h1{font-size:34px;margin:0}h2{margin-top:0}article{background:white;border:1px solid #b4c6bf;border-radius:16px;padding:24px}section{display:grid;grid-template-columns:1fr 1fr;gap:20px}label,output{display:block;margin:14px 0}button,select,input{font:inherit;padding:6px}button{background:#17554b;color:white;border:0;border-radius:6px;padding:9px 16px}ul{padding-left:20px}li{margin:8px 0}@media(max-width:680px){section{grid-template-columns:1fr}}
+</style><main><header><h1>Kokoda</h1><p>共享设置预览 · 模拟设备「游戏 PC」</p></header><section><article><h2>主机 · 共享范围</h2>
+<fieldset><legend>设备</legend><span id="device" role="status"></span> <button id="approve">批准</button> <button id="deny">拒绝</button> <button id="revoke">撤销设备</button></fieldset><label>共享模式 <select id="mode"><option value="limited">仅指定窗口</option><option value="all">全部应用窗口</option></select></label>
+<fieldset id="rule"><legend>允许规则</legend><label>应用 <select id="app"><option value="">请选择</option><option>QQ</option><option>浏览器</option></select></label><label>标题包含 <input id="keyword" placeholder="可选关键词"></label></fieldset>
+<p id="preview"></p><button id="save">保存共享范围</button></article>
+<article><h2>客户端 · 游戏 PC</h2><fieldset><legend>设备配对</legend><span id="connection" role="status"></span> <button id="pair">请求配对</button> <button id="cancel">取消</button></fieldset><div id="workspace"><label>全局画质 <select><option>原版图像</option><option>流畅 · 30 FPS</option><option selected>清晰 · 30 FPS</option><option>高帧率 · 60 FPS</option></select></label><h3>可共享窗口</h3><div id="list" aria-live="polite"></div><output id="active"></output></div></article></section></main>
+<script>
+const el=id=>document.getElementById(id);
+const roots=[{app:'QQ',title:'项目讨论',child:'成员资料卡'},{app:'QQ',title:'私人聊天'},{app:'浏览器',title:'视频播放'}];
+let opened=null;
+function allowed(){const word=el('keyword').value.trim().toLowerCase(),app=el('app').value;return roots.filter(w=>el('mode').value==='all'||((word||app)&&(!app||app===w.app)&&w.title.toLowerCase().includes(word)));}
+function preview(){const all=el('mode').value==='all';el('rule').disabled=all;el('preview').textContent=(all?'所有可共享窗口将对当前连接设备可见。 ':'保存后共享：')+(allowed().map(w=>w.title+(w.child?'（含'+w.child+'）':'')).join('、')||'无窗口');}
+let saved=[];
+function apply(){saved=allowed();renderCatalog();}
+function renderCatalog(){const selected=saved,list=el('list');list.replaceChildren();if(!selected.includes(opened)){opened=null;el('active').textContent='';}if(!selected.length)list.textContent='主机当前没有可共享的窗口。';for(const w of selected){const p=document.createElement('p'),button=document.createElement('button');button.textContent='打开 '+w.app+' · '+w.title;button.onclick=()=>{opened=w;el('active').textContent='正在查看 '+w.title+(w.child?'，可操作附属窗口「'+w.child+'」':'');};p.append(button);list.append(p);}}
+for(const id of ['mode','keyword','app'])el(id).oninput=preview;el('save').onclick=apply;preview();apply();
+
+let paired=false;
+const labels={'idle': ['没有待批准设备', '尚未配对'], 'pending': ['笔记本请求配对', '等待主机批准'], 'connected': ['笔记本已连接', '已连接'], 'denied': ['已拒绝请求', '配对被拒绝'], 'revoked': ['设备已移除', '权限已撤销']};
+function connectionState(state){
+ paired=state==='connected';
+ const pending=state==='pending';
+ el('device').textContent=labels[state][0];
+ el('connection').textContent=labels[state][1];
+ el('pair').hidden=pending||paired; el('cancel').hidden=!pending;
+ el('approve').hidden=el('deny').hidden=!pending;
+ el('revoke').hidden=!paired; el('workspace').hidden=!paired;
+ if(!paired){opened=null;el('active').textContent='';}
+}
+el('pair').onclick=()=>connectionState('pending');
+el('cancel').onclick=()=>connectionState('idle');
+el('approve').onclick=()=>{connectionState('connected');renderCatalog();};
+el('deny').onclick=()=>connectionState('denied');
+el('revoke').onclick=()=>{if(confirm('立即断开此设备并撤销访问权限？'))connectionState('revoked');};
+connectionState('idle');
+
+</script></html>

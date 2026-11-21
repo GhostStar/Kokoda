@@ -1,0 +1,17 @@
+/target/
+/.tools/
+/.cache/
+.DS_Store
+
+/dist/
+
+# Local pairing and host identity credentials
+/identity/
+/pairing/
+**/pairing-token
+**/private-key.der
+**/certificate.der
+**/password.dat
+
+__pycache__/
+*.pyc

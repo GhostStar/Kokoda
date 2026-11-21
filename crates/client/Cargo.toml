@@ -1,0 +1,18 @@
+[package]
+name = "kokoda-client"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["lib", "staticlib"]
+
+[dependencies]
+serde_json.workspace = true
+kokoda-protocol = { path = "../protocol" }
+kokoda-transport = { path = "../transport" }
+base64 = "0.22"
+kokoda-app-model = { path = "../app-model" }
+
+[dev-dependencies]
+kokoda-media = { path = "../media" }

@@ -1,0 +1,8 @@
+[
+  {"traits":{"owned":false,"tool":false,"app":false,"owner_disabled":false,"transient":false},"role":"independent"},
+  {"traits":{"owned":true,"tool":false,"app":false,"owner_disabled":false,"transient":false},"role":"floating"},
+  {"traits":{"owned":true,"tool":false,"app":true,"owner_disabled":false,"transient":false},"role":"independent"},
+  {"traits":{"owned":true,"tool":false,"app":true,"owner_disabled":true,"transient":false},"role":"modal"},
+  {"traits":{"owned":false,"tool":true,"app":false,"owner_disabled":false,"transient":false},"role":"floating"},
+  {"traits":{"owned":true,"tool":true,"app":false,"owner_disabled":true,"transient":true},"role":"transient"}
+]

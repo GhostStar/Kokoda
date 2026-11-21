@@ -1,0 +1,10 @@
+[package]
+name = "kokoda-protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+kokoda-app-model = { path = "../app-model" }
+serde.workspace = true
+serde_json.workspace = true

@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kokoda · Sharing preview</title>
+<style>
+:root{font:16px system-ui;color:#172d31;background:#edf2ee}main{max-width:960px;margin:6vh auto;padding:24px}header{border-bottom:2px solid #254948;margin-bottom:24px}h1{font-size:34px;margin:0}h2{margin-top:0}article{background:white;border:1px solid #b4c6bf;border-radius:16px;padding:24px}section{display:grid;grid-template-columns:1fr 1fr;gap:20px}label,output{display:block;margin:14px 0}button,select,input{font:inherit;padding:6px}button{background:#17554b;color:white;border:0;border-radius:6px;padding:9px 16px}ul{padding-left:20px}li{margin:8px 0}@media(max-width:680px){section{grid-template-columns:1fr}}
+</style><main><header><h1>Kokoda</h1><p>Sharing preview · Sample device: Gaming PC</p></header><section><article><h2>Host · Sharing scope</h2>
+<fieldset><legend>Devices</legend><span id="device" role="status"></span> <button id="approve">Approve</button> <button id="deny">Deny</button> <button id="revoke">Revoke device</button></fieldset><label>Sharing mode <select id="mode"><option value="limited">Selected windows</option><option value="all">All app windows</option></select></label>
+<fieldset id="rule"><legend>Allow rule</legend><label>App <select id="app"><option value="">Choose an app</option><option>QQ</option><option>Browser</option></select></label><label>Title contains <input id="keyword" placeholder="Optional keyword"></label></fieldset>
+<p id="preview"></p><button id="save">Save sharing scope</button></article>
+<article><h2>Client · Gaming PC</h2><fieldset><legend>Device pairing</legend><span id="connection" role="status"></span> <button id="pair">Request pairing</button> <button id="cancel">Cancel</button></fieldset><div id="workspace"><label>Global quality <select><option>Original image</option><option>Smooth · 30 FPS</option><option selected>Clear · 30 FPS</option><option>High frame rate · 60 FPS</option></select></label><h3>Available windows</h3><div id="list" aria-live="polite"></div><output id="active"></output></div></article></section></main>
+<script>
+const el=id=>document.getElementById(id);
+const roots=[{app:'QQ',title:'Project discussion',child:'Member profile'},{app:'QQ',title:'Private chat'},{app:'Browser',title:'Video playback'}];
+let opened=null;
+function allowed(){const word=el('keyword').value.trim().toLowerCase(),app=el('app').value;return roots.filter(w=>el('mode').value==='all'||((word||app)&&(!app||app===w.app)&&w.title.toLowerCase().includes(word)));}
+function preview(){const all=el('mode').value==='all';el('rule').disabled=all;el('preview').textContent=(all?'All available windows will be visible to the connected device. ':'Shared after saving: ')+(allowed().map(w=>w.title+(w.child?' (includes '+w.child+')':'')).join(', ')||'No windows');}
+let saved=[];
+function apply(){saved=allowed();renderCatalog();}
+function renderCatalog(){const selected=saved,list=el('list');list.replaceChildren();if(!selected.includes(opened)){opened=null;el('active').textContent='';}if(!selected.length)list.textContent='The host has no shared windows.';for(const w of selected){const p=document.createElement('p'),button=document.createElement('button');button.textContent='Open '+w.app+' · '+w.title;button.onclick=()=>{opened=w;el('active').textContent='Viewing '+w.title+(w.child?', linked window: '+w.child+'':'');};p.append(button);list.append(p);}}
+for(const id of ['mode','keyword','app'])el(id).oninput=preview;el('save').onclick=apply;preview();apply();
+
+let paired=false;
+const labels={'idle': ['No pending device', 'Unpaired'], 'pending': ['Laptop requests pairing', 'Waiting for host approval'], 'connected': ['Laptop connected', 'Connected'], 'denied': ['Request denied', 'Pairing denied'], 'revoked': ['Device removed', 'Access revoked']};
+function connectionState(state){
+ paired=state==='connected';
+ const pending=state==='pending';
+ el('device').textContent=labels[state][0];
+ el('connection').textContent=labels[state][1];
+ el('pair').hidden=pending||paired; el('cancel').hidden=!pending;
+ el('approve').hidden=el('deny').hidden=!pending;
+ el('revoke').hidden=!paired; el('workspace').hidden=!paired;
+ if(!paired){opened=null;el('active').textContent='';}
+}
+el('pair').onclick=()=>connectionState('pending');
+el('cancel').onclick=()=>connectionState('idle');
+el('approve').onclick=()=>{connectionState('connected');renderCatalog();};
+el('deny').onclick=()=>connectionState('denied');
+el('revoke').onclick=()=>{if(confirm('Disconnect this device and remove its access?'))connectionState('revoked');};
+connectionState('idle');
+
+</script></html>

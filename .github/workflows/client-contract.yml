@@ -1,0 +1,16 @@
+name: Shared core contracts
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - if: runner.os == 'Windows'
+        run: python scripts/prepare-ffmpeg.py
+      - run: python tests/check-locales.py
+      - run: cargo test --workspace --locked
