@@ -122,11 +122,8 @@ let duplicateTitles: [String:Any] = ["type":"windows","windows":[
     ["id":1,"title":"QQ"],["id":2,"title":"QQ"],["id":3,"title":"Another window"]]]
 controller.buffer.append(try! JSONSerialization.data(withJSONObject:duplicateTitles));controller.buffer.append(10)
 controller.consume()
-precondition(controller.choices.numberOfItems == 3,"Duplicate titles must not remove or shift menu items")
-controller.choices.selectItem(at:1)
-precondition(controller.windows[controller.choices.indexOfSelectedItem]["id"] as? Int == 2)
-print("PASS: duplicate window titles preserve target identity")
-
-controller.openWindow()
-precondition((controller.controlRequests.last?["id"] as? NSNumber)?.uint64Value == 2,"Selection must use bound HWND, not menu index")
-print("PASS: selected menu item routes its bound HWND")
+precondition(controller.managerRows().count == 3,"Duplicate titles must retain separate rows")
+let row=controller.managerRows().first{$0.id==2}!
+controller.activateManagerRow(row)
+precondition((controller.controlRequests.last?["id"] as? NSNumber)?.uint64Value == 2,"Selection must use bound HWND, not row index")
+print("PASS: duplicate titles preserve identity and selection routes its bound HWND")

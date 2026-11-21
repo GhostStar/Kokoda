@@ -37,10 +37,19 @@ extension AppDelegate {
             item.window.isExcludedFromWindowsMenu=true;item.window.parent?.removeChildWindow(item.window);item.window.orderOut(nil);rememberViewer(item)
         }
     }
-    func restoreViewers() {
+    func restoreViewers(only target:UInt64?=nil) {
+        var restoring=Set<UInt64>()
+        if let target=target {
+            restoring.insert(target)
+            for _ in 0..<surfaces.count {
+                for child in surfaces.values where child.role != "independent" {
+                    if let parent=child.presentation?.owner ?? (child.id != rootID ? rootID:nil),restoring.contains(parent) {restoring.insert(child.id)}
+                }
+            }
+        }
         let previous=applyingWindowState;applyingWindowState=true
         defer{applyingWindowState=previous}
-        for s in surfaces.values where s.locallyClosed {
+        for s in surfaces.values where s.locallyClosed && (target==nil || restoring.contains(s.id)) {
             s.locallyClosed=false;playbackFeedback += s.heldFeedback;s.heldFeedback.removeAll()
             if let p=s.presentation {s.configure(p,readOnly:readOnly)} else {s.view.inputEnabled = !readOnly;s.window.isExcludedFromWindowsMenu=s.role != "independent"}
             if s.window.isMiniaturized {s.window.deminiaturize(nil)}
@@ -161,7 +170,7 @@ extension AppDelegate {
     }
     @objc func endViewingApplication() {
         guard let sid=focusSessionID ?? lastActiveSessionID,sessions[sid] != nil else{return}
-        withSession(sid){resumeToken=nil;clearSelection();controlRequests.removeAll();controlRequests.append(["command":"close_window"]);poll()}
+        endManagerSession(sid)
     }
     func windowWillStartLiveResize(_ note:Notification) {
         guard !applyingWindowState,supportsWindowManagement,!readOnly,let window=note.object as? NSWindow,let sid=sessionID(for:window) else{return}

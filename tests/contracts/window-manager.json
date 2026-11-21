@@ -1,0 +1,13 @@
+[
+  {"name":"read-only can view","input":{"connected":true,"read_only":true,"title":"Notes","query":"NOT"},"expected":{"state":"available","action":"open","rank":2}},
+  {"name":"existing window focuses","input":{"connected":true,"viewing":true,"title":"聊天","query":"聊天"},"expected":{"state":"viewing","action":"focus","rank":3}},
+  {"name":"hidden window restores","input":{"connected":true,"viewing":true,"closed":true},"expected":{"state":"hidden","action":"restore","rank":0}},
+  {"name":"minimized window restores","input":{"connected":true,"viewing":true,"minimized":true},"expected":{"state":"minimized","action":"restore","rank":0}},
+  {"name":"opening is not duplicated","input":{"connected":true,"opening":true},"expected":{"state":"opening","action":"none","rank":0}},
+  {"name":"ending cannot reopen","input":{"connected":true,"ending":true,"viewing":true},"expected":{"state":"ending","action":"none","rank":0}},
+  {"name":"blocked owner selects modal","input":{"connected":true,"viewing":true,"blocked":true,"closed":true,"modal_available":true},"expected":{"state":"blocked","action":"modal","rank":0}},
+  {"name":"unknown modal blocks input","input":{"connected":true,"viewing":true,"blocked":true},"expected":{"state":"blocked","action":"none","rank":0}},
+  {"name":"disconnect overrides cached viewer","input":{"connected":false,"viewing":true,"closed":true},"expected":{"state":"offline","action":"none","rank":0}},
+  {"name":"unmatched title","input":{"connected":true,"title":"工作聊天","query":"other"},"expected":{"state":"available","action":"open","rank":-1}},
+  {"name":"Chinese substring","input":{"connected":true,"title":"工作聊天","query":"聊天"},"expected":{"state":"available","action":"open","rank":1}}
+]

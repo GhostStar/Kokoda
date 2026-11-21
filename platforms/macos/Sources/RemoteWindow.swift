@@ -115,6 +115,7 @@ final class RemoteSurface {
     var hostGeometryChanged=false
     var locallyClosed=false
     var nativeIdentity=""
+    var managerTitle=""
     var heldFeedback:[[String:Any]]=[]
     var hostDPI:Double {presentation?.dpi ?? 96}
     var localZoom:Double {(displayScale ?? (96/hostDPI))*hostDPI/96}

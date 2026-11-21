@@ -6,6 +6,7 @@ import ImageIO
 final class ApplicationSession {
     let id: UInt64
     var requestedRoot: UInt64?
+    var ending = false
     static let defaultPreset = 2
     var needsQualityUpdate = false
     var preset = ApplicationSession.defaultPreset

@@ -175,3 +175,12 @@ Wayland/Weston 无头合成器通过 **15 个用例**，可选实连用例跳过
 剪贴板、HDR/颜色及跨显示器 DPI 切换仍需硬件/用户验证。虚拟机测试不代表
 RTX/AMD/Intel 加速已认证。Qt 播放目前回读 GPU 到 CPU，不是零拷贝渲染。
 文件传输/音频尚未实现。[客户端构建与限制](desktop-clients.md)。
+
+
+## Mac 管理界面与窗口选取 — 2026-11-22
+
+新版 AppKit 管理界面及共享状态／动作／搜索合同已在 Apple Silicon macOS 通过本地回归。管理套件以合成协议响应驱动真实原生控件，覆盖同名／空标题、行重排、已观察的句柄复用、选择保持、打开去重、所属窗口展开、定向恢复且不恢复独立兄弟窗口、模态路由、取消及迟到响应拒绝、查看窗口代次及撤权／断线元数据清理。中英文截图仅包含合成测试窗口，已目视检查；收起和展开选项均在内容边界内。
+
+`cargo test --workspace --locked` 在 macOS 通过 50 项测试；中英两语的 `ManagerTests`、`LocalizationTests`，以及 `MultiSessionTests`、`SessionTests`、`GroupTests`、`WindowManagementTests`、`ViewerSizingTests`、`InputTests`、`DragTests`、`PasswordTests` 均通过。本地化校验覆盖 211 个双语键。GitHub macOS 任务已加入这些原生回归。测试应用均在完成后退出，本轮未启动 Windows 夹具或主机。
+
+这是本地界面／模型回归，不能替代 Windows 联网、Qt 界面、实体显卡、性能或实际输入法候选框验收。联网夹具驱动已改用新的管理模型选取，但本轮未重跑；既有已记录限制仍然有效。

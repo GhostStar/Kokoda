@@ -14,3 +14,13 @@ jobs:
         run: python scripts/prepare-ffmpeg.py
       - run: python tests/check-locales.py
       - run: cargo test --workspace --locked
+      - name: Native macOS manager regressions
+        if: runner.os == 'macOS'
+        run: |
+          for language in en zh-Hans; do
+            KOKODA_TEST_LANGUAGE=$language scripts/run-macos-test.sh ManagerTests
+            KOKODA_TEST_LANGUAGE=$language scripts/run-macos-test.sh LocalizationTests
+          done
+          for suite in MultiSessionTests SessionTests GroupTests WindowManagementTests ViewerSizingTests InputTests DragTests PasswordTests; do
+            scripts/run-macos-test.sh "$suite"
+          done

@@ -18,9 +18,8 @@ let secret=try JSONSerialization.jsonObject(with:Data(contentsOf:URL(fileURLWith
 controller.host.stringValue=CommandLine.arguments[2];controller.password.stringValue=secret["password"]!
 controller.connectHost()
 try waitFor("Host authentication/capability") {controller.authenticated && controller.supportsWindowVideoAlpha}
-try waitFor("Synthetic fixture discovery") {controller.choices.itemArray.contains{$0.title=="Kokoda Popup Video Root"}}
-controller.choices.select(controller.choices.itemArray.first{$0.title=="Kokoda Popup Video Root"}!)
-controller.openWindow()
+try waitFor("Synthetic fixture discovery") {controller.managerRows().contains{$0.title=="Kokoda Popup Video Root"}}
+controller.activateManagerRow(controller.managerRows().first{$0.title=="Kokoda Popup Video Root"}!)
 try waitFor("All native viewers rendered") {controller.sessions.values.contains{$0.surfaces.count==4 && $0.surfaces.values.allSatisfy{$0.view.image != nil}}}
 let state=controller.sessions.values.first{$0.surfaces.count==4}!
 try waitFor("Per-window quality feedback and Retina budget negotiation") {controller.supportsResolutionBitrate && state.surfaces.values.allSatisfy{!$0.rateText.isEmpty}}

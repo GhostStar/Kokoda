@@ -26,9 +26,7 @@ try waitFor("Password connection did not authenticate") {controller.authenticate
 precondition(controller.process?.arguments?.contains("--password-stdin") == true)
 precondition(controller.process?.arguments?.contains(secret["password"]!) == false)
 try waitFor("Isolated fixture unavailable") {controller.windows.contains{$0["title"] as? String == "Kokoda Password Fixture"}}
-let item=controller.choices.itemArray.first{$0.title == "Kokoda Password Fixture"}!
-controller.choices.select(item)
-controller.openWindow()
+controller.activateManagerRow(controller.managerRows().first{$0.title == "Kokoda Password Fixture"}!)
 try waitFor("Authenticated window did not render") {controller.sessions.values.contains{$0.surfaces.values.contains{$0.view.image != nil}}}
 let original=controller.process!
 original.terminate()

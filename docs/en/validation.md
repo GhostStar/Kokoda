@@ -183,3 +183,12 @@ multiple display/DPI transitions still require hardware/user validation. VM test
 do not certify RTX/AMD/Intel acceleration. The Qt video presenter currently copies
 GPU output back to CPU; it is not a zero-copy renderer. File transfer/audio remain
 unimplemented. See [desktop clients](desktop-clients.md) for build and limits.
+
+
+## Mac manager and window selection — 2026-11-22
+
+The new AppKit manager and shared state/action/search contract passed local regression on Apple Silicon macOS. The manager suite uses synthetic protocol responses and real native controls, covering duplicate/empty titles, row reordering, observed handle reuse, stable selection, pending-open deduplication, owned-window expansion, targeted restore without restoring independent siblings, modal routing, cancel/late-response rejection, viewer-generation checks and revocation/disconnect metadata cleanup. English and Simplified Chinese layouts were captured using only synthetic windows and inspected; collapsed and expanded settings fit the content bounds.
+
+`cargo test --workspace --locked` passed (50 tests on macOS), along with `ManagerTests` in both languages, `LocalizationTests` in both languages, `MultiSessionTests`, `SessionTests`, `GroupTests`, `WindowManagementTests`, `ViewerSizingTests`, `InputTests`, `DragTests` and `PasswordTests`. Locale validation checked 211 bilingual keys. The GitHub macOS job now runs these native regressions. Test applications exited after completion; no Windows fixture or host was started for this round.
+
+This is local UI/model regression, not renewed Windows networking, Qt UI, physical GPU, performance or live IME-candidate acceptance. Live fixture drivers were updated to select through the new manager model but were not rerun. Previous documented limitations remain.

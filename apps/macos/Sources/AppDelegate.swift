@@ -41,12 +41,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
     func forgetRecovery() {for state in sessions.values {state.resumeToken=nil;state.resumeWindowFrame=nil;state.requestedRoot=nil;state.viewerPreferences.removeAll()}}
-    let window = NSWindow(contentRect:NSRect(x:200,y:300,width:640,height:620),
-                          styleMask:[.titled,.closable,.miniaturizable],backing:.buffered,defer:false)
+    let window = ManagerWindow(contentRect:NSRect(x:200,y:300,width:640,height:620),
+                          styleMask:[.titled,.closable,.miniaturizable,.resizable],backing:.buffered,defer:false)
     let host = NSTextField(string:UserDefaults.standard.string(forKey:"hostAddress") ?? "127.0.0.1:47831")
     let password = NSSecureTextField(string: "")
     let status = NSTextField(labelWithString:L("status.enter_password"))
-    let choices = NSPopUpButton()
+    var manager: ManagerController?
+    var managerCatalogIDs: [UInt64:(serial:UInt64, identity:String)] = [:]
+    var managerCatalogSerial: UInt64 = 0
     let quality = NSPopUpButton()
     let adaptiveResolution = NSButton(checkboxWithTitle:L("display.adaptive"),target:nil,action:nil)
     var lastViewport: NSSize? { get { session.lastViewport } set { session.lastViewport=newValue } }
@@ -127,50 +129,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let self=self else{return};self.sleeping=false
             if self.wantsConnection && self.reconnectEnabled {self.reconnectAttempt=0;self.retryAt=Date().addingTimeInterval(1);self.status.stringValue=L("status.wake")}
         })
-        let stack = NSStackView()
-        stack.orientation = .vertical; stack.alignment = .leading; stack.spacing = 12
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        window.contentView!.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo:window.contentView!.leadingAnchor,constant:20),
-            stack.trailingAnchor.constraint(equalTo:window.contentView!.trailingAnchor,constant:-20),
-            stack.topAnchor.constraint(equalTo:window.contentView!.topAnchor,constant:20)])
-        host.placeholderString = L("connection.address")
-        password.placeholderString = L("connection.password")
-        password.setAccessibilityLabel(L("connection.password"))
-        for item in [host,password,choices] {
-            item.widthAnchor.constraint(equalToConstant:600).isActive = true
-            stack.addArrangedSubview(item)
-        }
-        stack.addArrangedSubview(includeApplication)
-        choices.toolTip=L("windows.tip")
-        quality.addItems(withTitles:[L("quality.original"),L("quality.smooth"),L("quality.clear"),L("quality.fast")])
-        quality.selectItem(at:globalPreset)
-        quality.target=self;quality.action=#selector(qualityChanged)
-        adaptiveResolution.state = .on
-        adaptiveResolution.toolTip = L("display.adaptive_tip")
-        stack.addArrangedSubview(adaptiveResolution)
-        quality.toolTip = L("quality.tip")
-        stack.addArrangedSubview(quality)
-        stack.addArrangedSubview(NSTextField(wrappingLabelWithString:L("development.notice")))
-        stack.addArrangedSubview(NSTextField(labelWithString:L("clipboard.shortcuts")))
-        syncRemoteClipboard.state = .on
-        syncRemoteClipboard.toolTip = L("clipboard.sync_tip")
-        stack.addArrangedSubview(syncRemoteClipboard)
-        stack.addArrangedSubview(NSStackView(views:[
-            NSButton(title:L("connection.connect"),target:self,action:#selector(connectHost)),
-            NSButton(title:L("connection.disconnect"),target:self,action:#selector(disconnectHost)),
-            NSButton(title:L("windows.refresh"),target:self,action:#selector(refreshWindows)),
-            NSButton(title:L("windows.open"),target:self,action:#selector(openWindow))]))
-        status.lineBreakMode = .byWordWrapping; status.maximumNumberOfLines = 3
-        status.widthAnchor.constraint(equalToConstant:600).isActive = true
-        stack.addArrangedSubview(status)
-        metrics.maximumNumberOfLines=5;metrics.lineBreakMode = .byWordWrapping
-        metrics.widthAnchor.constraint(equalToConstant:600).isActive=true
-        metrics.textColor = .secondaryLabelColor
-        metrics.toolTip=L("stats.tip")
-        stack.addArrangedSubview(metrics)
-        for view in stack.arrangedSubviews { view.widthAnchor.constraint(lessThanOrEqualToConstant:600).isActive=true }
+        manager=ManagerController(app:self)
+        manager?.build()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps:true)
         let pollTimer = Timer(timeInterval:0.008,repeats:true) { [weak self] _ in self?.poll() }
@@ -204,6 +164,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         let windowsMenu=menu(L("menu.window"));NSApp.windowsMenu=windowsMenu
         _=add(windowsMenu,L("menu.settings_short"),#selector(showSettings))
+        _=add(windowsMenu,L("manager.find"),#selector(findManagerWindow))
         _=add(windowsMenu,L("menu.restore_viewers"),#selector(restoreClosedViewers))
         let behavior=NSMenu(title:L("menu.resize_behavior"))
         let behaviorItem=NSMenuItem(title:L("menu.resize_behavior"),action:nil,keyEquivalent:"");behaviorItem.submenu=behavior;windowsMenu.addItem(behaviorItem)
@@ -217,6 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         add(windowsMenu,L("menu.minimize"),#selector(NSWindow.performMiniaturize(_:)),"m",nil).target=nil
         add(windowsMenu,L("menu.close_window"),#selector(NSWindow.performClose(_:)),"w",nil).target=nil
     }
+    @objc func findManagerWindow() {showSettings();manager?.focusSearch()}
     @objc func showSettings() { window.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true) }
     func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows flag:Bool)->Bool {showSettings();return true}
     @objc func toggleStats() {metrics.isHidden.toggle();statsMenu?.state=metrics.isHidden ? .off : .on}
@@ -353,6 +315,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         supportsPipeline=false;supportsPlaybackFeedback=false;supportsResolutionBitrate=false;asynchronousRequests.removeAll();playbackFeedback.removeAll()
         input?.closeFile(); input = nil
         if let child=process { stopBridge(child) }; process = nil
+        windows.removeAll();managerCatalogIDs.removeAll()
+        manager?.rows.removeAll()
         readOnly=false;syncRemoteClipboard.isEnabled=true
         supportsAnchoredPointer=false;supportsWindowManagement=false
         supportsWindowVideoAlpha=false
@@ -365,6 +329,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }}
         sessions=sessions.filter{$0.key==0 || $0.value.resumeToken != nil}
         connectionRequests.removeAll();buffer.removeAll();parsedResponses.removeAll();errors.removeAll();lastResponseAt = .distantPast
+        manager?.refresh(force:true)
     }
     func stopBridge(_ child:Process) {
         if child.isRunning { child.terminate() }
@@ -457,27 +422,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         } catch { connectionFailed(L("error.write",error.localizedDescription),retryable:true) }
     }
     @objc func refreshWindows() {
+        guard authenticated else{return}
         connectionRequests.removeAll { $0["command"] as? String == "list_windows" }
         connectionRequests.append(["command":"list_windows"]); poll()
     }
     @objc func openWindow() {
-        guard authenticated,let number=choices.selectedItem?.representedObject as? NSNumber else{return}
-        let root=number.uint64Value
-        if let existing=sessions.values.first(where:{$0.requestedRoot==root || $0.surfaces[root] != nil}) {
-            withSession(existing.id){restoreViewers()}
-            if let view=existing.surfaces[root] ?? existing.rootID.flatMap({existing.surfaces[$0]}) {view.window.makeKeyAndOrderFront(nil);view.view.restoreTextInputFocus()}
-            status.stringValue=L("windows.already_open");return
-        }
-        let live=sessions.values.filter{$0.selected || !$0.controlRequests.isEmpty || $0.requestedRoot != nil}
-        guard live.count<8 else {status.stringValue=L("windows.session_limit");return}
-        if !supportsMultiSession && !live.isEmpty {status.stringValue=L("windows.upgrade_multi");return}
-        nextSessionID += 1
-        let id=supportsMultiSession ? nextSessionID : 0
-        let state=ApplicationSession(id:id);state.requestedRoot=root
-        state.preset=globalPreset;state.adaptive=adaptiveResolution.state == .on;state.applicationScope=includeApplication.state == .on
-        sessions[id]=state;contextSessionID=id
-        state.controlRequests.append(selectionRequest(id:root,state:state))
-        poll()
+        manager?.activateSelected()
     }
     func enqueue(_ incoming: [String:Any], id: UInt64, token: UInt64) {
         guard !readOnly else {status.stringValue=L("sharing.read_only");return}
@@ -634,6 +584,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     func poll() {
         updateMetrics()
+        manager?.refresh()
         if let next=retryAt,Date()>=next,!sleeping {retryAt=nil;startConnection();return}
         if pending,Date().timeIntervalSince(requestStarted)>35 {
             connectionFailed(L("error.timeout"),retryable:authenticated);return
@@ -790,6 +741,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if surface.bounds.size != bounds.size {surface.hostGeometryChanged=true}
             surface.bounds = bounds
             let title=entry["title"] as? String ?? L("windows.untitled")
+            surface.managerTitle=title
             surface.window.title = readOnly ? L("sharing.viewer_title",title) : title
             surface.view.inputEnabled = !readOnly && !surface.locallyClosed
             surface.view.anchoredPointer = supportsAnchoredPointer
@@ -913,6 +865,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         status.stringValue = L("status.connected_counts",sessions.values.filter{$0.selected}.count,sessions.values.reduce(0){$0+$1.surfaces.values.filter{!$0.locallyClosed}.count})
     }
     func handleResponse(_ response:[String:Any],type:String) {
+        defer {if ["windows","selected","window_group","closed","error","bridge_error"].contains(type) {manager?.refresh(force:true)}}
+        if session.ending && !["closed","error","windows","pong","stream_started","bridge_error"].contains(type) {return}
             switch type {
             case "bridge_error":
                 status.toolTip=response["message"] as? String
@@ -948,16 +902,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 supportsWindowManagement=response["window_management"] as? Bool == true
                 supportsResolutionBitrate=response["resolution_bitrate"] as? Bool == true
                 if response["push_video"] as? Bool == true && !supportsPushVideo {connectionRequests.insert(["command":"start_stream"],at:0)}
-                let previous = choices.titleOfSelectedItem
-                windows = (response["windows"] as? [[String:Any]] ?? []).filter { !($0["title"] as? String ?? "").isEmpty }
-                choices.removeAllItems()
-                choices.menu?.autoenablesItems = false
-                for entry in windows {
-                    let item = NSMenuItem(title:entry["title"] as? String ?? "",action:nil,keyEquivalent:"")
-                    item.representedObject = entry["id"]
-                    choices.menu?.addItem(item)
-                }
-                if let previous = previous { choices.selectItem(withTitle:previous) }
+                replaceManagerCatalog(response["windows"] as? [[String:Any]] ?? [])
                 status.stringValue = readOnly ? L("sharing.read_only") : L("status.choose_window")
                 if restoreAfterConnect {
                     restoreAfterConnect=false
@@ -1029,12 +974,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 if response["window_lost"] as? Bool == true,
                    let id = (response["window_id"] as? NSNumber)?.uint64Value,
                    let token = (response["token"] as? NSNumber)?.uint64Value {
-                    if surfaces[id]?.token == token { removeSurface(id) }
+                    if surfaces[id]?.token == token {
+                        windows.removeAll{($0["id"] as? NSNumber)?.uint64Value==id};managerCatalogIDs.removeValue(forKey:id)
+                        removeSurface(id)
+                    }
                     lastGroup = .distantPast
                     status.stringValue = L("status.connected_counts",sessions.values.filter{$0.selected}.count,sessions.values.reduce(0){$0+$1.surfaces.values.filter{!$0.locallyClosed}.count})
                     return
                 }
-                if response["selection_lost"] as? Bool == true { session.requestedRoot=nil;resumeWindowFrame=nil;resumeToken=nil;clearSelection() }
+                if response["selection_lost"] as? Bool == true || (!selected && session.requestedRoot != nil) {
+                    let lost=Set(surfaces.keys).union(session.requestedRoot.map{[$0]} ?? [])
+                    windows.removeAll{($0["id"] as? NSNumber).map{lost.contains($0.uint64Value)} ?? false}
+                    for id in lost {managerCatalogIDs.removeValue(forKey:id)}
+                    session.requestedRoot=nil;resumeWindowFrame=nil;resumeToken=nil;clearSelection()
+                    if contextSessionID != 0 {sessions.removeValue(forKey:contextSessionID)}
+                }
                 status.stringValue = response["command"] as? String=="window_action" ? L("error.window_action") : (response["message"] as? String ?? L("error.remote"))
                 lastGroup = .distantPast
             default: break

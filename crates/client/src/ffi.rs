@@ -24,6 +24,7 @@ impl Bridge {
     fn dispatch(&mut self, event: Value) -> Result<Value, &'static str> {
         let mut actions = Vec::new();
         match event["type"].as_str().ok_or("missing_action")? {
+            "manager_row" => return Ok(crate::manager::row(&event)),
             "track" => {
                 let session = event["session"].as_u64().ok_or("missing_session")?;
                 let window = Window {

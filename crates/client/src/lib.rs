@@ -92,3 +92,4 @@ impl Controller {
 }
 
 pub mod ffi;
+pub mod manager;

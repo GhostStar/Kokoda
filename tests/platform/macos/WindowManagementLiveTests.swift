@@ -20,9 +20,9 @@ func wait(_ message:String,_ predicate:()->Bool)throws {
 let secret=try JSONSerialization.jsonObject(with:Data(contentsOf:secretURL)) as! [String:String]
 c.host.stringValue=CommandLine.arguments[2];c.password.stringValue=secret["password"]!;c.connectHost()
 try wait("Authentication and role capability"){c.authenticated && c.supportsWindowManagement}
-try wait("Root discovery"){c.choices.itemArray.contains{$0.title=="Kokoda Roles Root"}}
+try wait("Root discovery"){c.managerRows().contains{$0.title=="Kokoda Roles Root"}}
 try trigger("animate")
-c.choices.select(c.choices.itemArray.first{$0.title=="Kokoda Roles Root"}!);c.openWindow()
+c.activateManagerRow(c.managerRows().first{$0.title=="Kokoda Roles Root"}!)
 try wait("All viewers rendered"){c.sessions.values.contains{$0.surfaces.count==5 && $0.surfaces.values.allSatisfy{$0.view.image != nil}}}
 let state=c.sessions.values.first{$0.surfaces.count==5}!
 func surface(_ title:String)->RemoteSurface? {state.surfaces.values.first{$0.window.title==title}}
