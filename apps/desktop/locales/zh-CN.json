@@ -69,7 +69,7 @@
   "clipboard.empty": "剪贴板中没有支持的文本或图片。",
   "error.input_backlog": "输入积压，已断开并释放按键",
   "error.timeout": "请求超时，请检查主机、网络或配对目录权限。",
-  "windows.untitled": "应用窗口",
+  "windows.untitled": "无标题窗口",
   "windows.group_limit": "窗口较多，当前最多显示 16 个窗口",
   "error.invalid_response": "收到无效响应",
   "error.permission": "系统拒绝访问，请检查文件或网络权限。",
@@ -186,7 +186,7 @@
   "manager.hide": "关闭本地窗口",
   "manager.options": "选项",
   "manager.scope_tip": "关联窗口范围在新打开应用时生效，不会扩大主机共享权限。",
-  "manager.search": "搜索窗口标题",
+  "manager.search": "搜索标题或程序名",
   "manager.window": "窗口",
   "manager.state": "状态",
   "manager.action": "操作",
@@ -234,5 +234,14 @@
   "host.picker_stale": "窗口已变化或消失，请从刷新后的列表重新选择。",
   "host.picker_direct": "直接匹配",
   "host.picker_owned": "所属后代",
-  "host.picker_preview_current": "预览已刷新，共享时主机会再次验证窗口。"
+  "host.picker_preview_current": "预览已刷新，共享时主机会再次验证窗口。",
+  "manager.filter": "显示",
+  "manager.filter_apps": "应用窗口",
+  "manager.filter_minimized": "已最小化",
+  "manager.filter_all": "全部（含辅助窗口）",
+  "manager.filter_tip": "默认隐藏工具提示、后台辅助及隐藏桌面窗口。筛选只影响此列表，不改变主机共享权限。",
+  "manager.resolution": "分辨率 / 缩放",
+  "manager.host_minimized": "主机已最小化",
+  "manager.window_id": "窗口 %@",
+  "manager.no_filtered": "当前筛选没有匹配窗口。试试“全部（含辅助窗口）”。"
 }

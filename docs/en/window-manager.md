@@ -89,3 +89,13 @@ Validation: shared contract tests, synthetic AppKit manager tests in both langua
 
 
 The Windows rule-example picker and Mac LAN discovery are now implemented; see [discovery and host selection](discovery.md). This supersedes the first Mac delivery note about the host picker remaining planned.
+
+## Recognizable catalog and filters — 2026-11-22
+
+The Mac manager now uses compact two-line rows: window title, executable basename, application icon, physical window size and display scale. Available rows no longer repeat “Available”; minimized host windows have an explicit label. The redundant bottom Open button was removed; double-click, Return and the row action still share the same identity-checked route.
+
+Search matches titles and executable names. The Show menu defaults to application windows, with Minimized and All (including auxiliary windows) alternatives. DWM-cloaked, tool, no-activate, shell and untitled borderless helper windows are excluded from the default view; ordinary titleless application windows remain identifiable by executable name. Filters are local presentation only. Already-viewed auxiliary surfaces remain accessible. Transient menus still stay out of the persistent manager.
+
+The Windows host enriches **only the authorized catalog** with additive `catalog` metadata: executable basename, fixed 32×32 straight-alpha RGBA icon (base64), DPI, role, auxiliary flag and dimensions (restored bounds when minimized). It does not send executable paths, class names or private owner IDs. Icons are extracted from executable resources without sending messages to potentially hung apps, cached for 60 seconds in at most 128 entries, and optional on extraction failure. Mac rejects icons outside the fixed format. Older hosts remain usable with a generic icon and window identifier; update both endpoints for the full list. This metadata is not a window identity or an authorization grant.
+
+Shared search semantics include executable names; Qt can consume the additive metadata but its existing picker has not yet been replaced by this Mac layout.

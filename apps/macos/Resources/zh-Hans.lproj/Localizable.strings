@@ -131,10 +131,17 @@
 "manager.connect_hint" = "连接主机后浏览其共享窗口。";
 "manager.connecting" = "正在连接／重连…";
 "manager.ending" = "正在结束查看…";
+"manager.filter" = "显示";
+"manager.filter_all" = "全部（含辅助窗口）";
+"manager.filter_apps" = "应用窗口";
+"manager.filter_minimized" = "已最小化";
+"manager.filter_tip" = "默认隐藏工具提示、后台辅助及隐藏桌面窗口。筛选只影响此列表，不改变主机共享权限。";
 "manager.find" = "查找窗口…";
 "manager.hidden" = "本地已关闭";
 "manager.hide" = "关闭本地窗口";
+"manager.host_minimized" = "主机已最小化";
 "manager.minimized" = "本地已最小化";
+"manager.no_filtered" = "当前筛选没有匹配窗口。试试“全部（含辅助窗口）”。";
 "manager.no_matches" = "没有匹配的窗口，请修改或清空搜索。";
 "manager.no_viewers" = "尚未查看窗口，请从“可用窗口”打开。";
 "manager.no_windows" = "主机未提供可用窗口，请刷新或在主机检查共享设置。";
@@ -142,9 +149,10 @@
 "manager.options" = "选项";
 "manager.read_only" = "只读";
 "manager.related" = "展开或折叠关联窗口";
+"manager.resolution" = "分辨率 / 缩放";
 "manager.restore" = "重新显示";
 "manager.scope_tip" = "关联窗口范围在新打开应用时生效，不会扩大主机共享权限。";
-"manager.search" = "搜索窗口标题";
+"manager.search" = "搜索标题或程序名";
 "manager.show_dialog" = "显示对话框";
 "manager.state" = "状态";
 "manager.stop_reconnect" = "停止重连";
@@ -153,6 +161,7 @@
 "manager.viewing" = "正在查看";
 "manager.viewing_count" = "正在查看（%d）";
 "manager.window" = "窗口";
+"manager.window_id" = "窗口 %@";
 "manager.window_list" = "获准窗口列表";
 "menu.about" = "关于 Kokoda";
 "menu.auto_reconnect" = "断线后自动恢复";
@@ -232,6 +241,6 @@
 "windows.open" = "打开窗口";
 "windows.refresh" = "刷新窗口";
 "windows.session_limit" = "当前最多同时打开 8 个应用会话。";
-"windows.untitled" = "应用窗口";
+"windows.untitled" = "无标题窗口";
 "windows.upgrade_groups" = "请更新 Windows 主机以支持窗口组";
 "windows.upgrade_multi" = "请更新 Windows 主机后同时打开多个应用。";

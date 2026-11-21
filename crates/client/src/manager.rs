@@ -40,7 +40,13 @@ pub fn row(value: &Value) -> Value {
         3
     } else if title.starts_with(&query) {
         2
-    } else if title.contains(&query) {
+    } else if title.contains(&query)
+        || value["application"]
+            .as_str()
+            .unwrap_or_default()
+            .to_lowercase()
+            .contains(&query)
+    {
         1
     } else {
         -1

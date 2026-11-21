@@ -25,6 +25,7 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
     weak var app:AppDelegate?
     let search=NSSearchField()
     let tabs=NSSegmentedControl(labels:[L("manager.available"),L("manager.viewing")],trackingMode:.selectOne,target:nil,action:nil)
+    let filter=NSPopUpButton()
     let table=ManagerTable()
     let scroll=NSScrollView()
     let empty=NSTextField(wrappingLabelWithString:"")
@@ -98,13 +99,17 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
         search.widthAnchor.constraint(greaterThanOrEqualToConstant:160).isActive=true
         button(refreshButton,#selector(refreshCatalog))
         let browse=NSStackView(views:[tabs,search,refreshButton]);browse.distribution = .fill;add(browse)
-        for (name,title,width) in [("window",L("manager.window"),340.0),("state",L("manager.state"),120.0),("action",L("manager.action"),120.0)] {
+        filter.addItems(withTitles:[L("manager.filter_apps"),L("manager.filter_minimized"),L("manager.filter_all")])
+        filter.target=self;filter.action=#selector(changeTab);filter.setAccessibilityLabel(L("manager.filter"))
+        filter.toolTip=L("manager.filter_tip")
+        add(NSStackView(views:[NSTextField(labelWithString:L("manager.filter")),filter]))
+        for (name,title,width) in [("window",L("manager.window"),380.0),("detail",L("manager.resolution"),155.0),("state",L("manager.state"),100.0),("action",L("manager.action"),100.0)] {
             let c=NSTableColumn(identifier:NSUserInterfaceItemIdentifier(name));c.title=title;c.width=width
-            c.minWidth=name=="window" ? 180:100
+            c.minWidth=name=="window" ? 220:(name=="detail" ? 140:80)
             c.resizingMask=name=="window" ? .autoresizingMask:[];table.addTableColumn(c)
         }
-        table.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
-        table.rowHeight=48;table.usesAlternatingRowBackgroundColors=true;table.allowsMultipleSelection=false
+        table.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
+        table.rowHeight=42;table.intercellSpacing=NSSize(width:8,height:0);table.usesAlternatingRowBackgroundColors=true;table.allowsMultipleSelection=false
         table.dataSource=self;table.delegate=self;table.target=self;table.doubleAction=#selector(activateSelected)
         table.setAccessibilityLabel(L("manager.window_list"))
         table.activate={[weak self] in self?.activateSelected()};table.find={[weak self] in self?.focusSearch()}
@@ -113,13 +118,13 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
         scroll.setContentHuggingPriority(.defaultLow,for:.vertical)
         empty.textColor = .secondaryLabelColor;empty.maximumNumberOfLines=2;add(empty)
         button(primary,#selector(activateSelected));button(hideButton,#selector(hideSelected));button(endButton,#selector(endSelected))
-        let actions=NSStackView(views:[primary,hideButton,endButton]);add(actions)
+        let actions=NSStackView(views:[hideButton,endButton]);add(actions)
         app.status.maximumNumberOfLines=2;app.status.lineBreakMode = .byWordWrapping;add(app.status)
         app.metrics.maximumNumberOfLines=3;app.metrics.lineBreakMode = .byWordWrapping;app.metrics.textColor = .secondaryLabelColor
         app.metrics.font = .systemFont(ofSize:11);app.metrics.toolTip=L("stats.tip");add(app.metrics)
         app.window.find={[weak self] in self?.focusSearch()}
-        app.window.minSize=NSSize(width:760,height:680)
-        app.window.setContentSize(NSSize(width:820,height:720))
+        app.window.minSize=NSSize(width:840,height:720)
+        app.window.setContentSize(NSSize(width:980,height:760))
         refresh(force:true)
     }
     func focusSearch() {app?.window.makeKeyAndOrderFront(nil);app?.window.makeFirstResponder(search)}
@@ -172,15 +177,18 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
         summary.stringValue=app.authenticated ? app.host.stringValue:(busy ? L("manager.connecting"):L("status.not_connected"))
         summary.toolTip=app.authenticated ? app.host.stringValue:nil
         connection.title=app.authenticated ? L("connection.disconnect"):(busy ? (app.retryAt != nil ? L("manager.stop_reconnect"):L("manager.cancel")):L("connection.connect"))
-        refreshButton.isEnabled=app.authenticated
+        refreshButton.isEnabled=app.authenticated;filter.isEnabled=app.authenticated
         reconnect.state=app.reconnectEnabled ? .on:.off
         let all=app.managerRows(query:search.stringValue)
         allRows=all
         expanded.formIntersection(Set(all.map{$0.key}))
-        let independent=all.filter{isRoot($0,in:all)}
+        func matchesFilter(_ row:ManagerRow)->Bool {
+            filter.indexOfSelectedItem==2 || (filter.indexOfSelectedItem==1 ? row.hostMinimized || row.state=="minimized" : !row.auxiliary || row.viewing)
+        }
+        let independent=all.filter{isRoot($0,in:all) && matchesFilter($0)}
         tabs.setLabel(L("manager.available_count",independent.count),forSegment:0)
         tabs.setLabel(L("manager.viewing_count",independent.filter{$0.viewing}.count),forSegment:1)
-        let candidates=all.filter{tabs.selectedSegment==0 || $0.viewing}
+        let candidates=all.filter{(tabs.selectedSegment==0 || $0.viewing) && matchesFilter($0)}
         var displayed:[ManagerRow]=[]
         func visit(_ row:ManagerRow,_ seen:Set<String>) {
             guard !seen.contains(row.key) else{return}
@@ -204,7 +212,7 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
             scroll.contentView.scroll(to:position);scroll.reflectScrolledClipView(scroll.contentView)
         }
         empty.isHidden = !rows.isEmpty
-        empty.stringValue = !app.authenticated ? L("manager.connect_hint") : (!search.stringValue.isEmpty ? L("manager.no_matches"):(tabs.selectedSegment==1 ? L("manager.no_viewers"):L("manager.no_windows")))
+        empty.stringValue = !app.authenticated ? L("manager.connect_hint") : (!search.stringValue.isEmpty ? L("manager.no_matches"):(tabs.selectedSegment==1 ? L("manager.no_viewers"):(!all.isEmpty ? L("manager.no_filtered"):L("manager.no_windows"))))
         updateActions()
     }
     func isRoot(_ row:ManagerRow,in all:[ManagerRow])->Bool {
@@ -227,7 +235,7 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
         case "hidden":return L("manager.hidden")
         case "minimized":return L("manager.minimized")
         case "viewing":return L("manager.viewing")
-        default:return app?.readOnly==true ? L("manager.read_only"):L("manager.available")
+        default:return app?.readOnly==true ? L("manager.read_only"):""
         }
     }
     func updateActions() {
@@ -235,6 +243,12 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
         primary.title=actionTitle(row?.action ?? "open");primary.isEnabled=row != nil && row?.action != "none"
         hideButton.isEnabled=row?.token != nil && row?.state != "hidden"
         endButton.isEnabled=row?.sessionID != nil
+    }
+    func catalogIcon(_ encoded:String)->NSImage? {
+        guard encoded.utf8.count==5464,let data=Data(base64Encoded:encoded),data.count==4096,
+              let bitmap=NSBitmapImageRep(bitmapDataPlanes:nil,pixelsWide:32,pixelsHigh:32,bitsPerSample:8,samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bitmapFormat:.alphaNonpremultiplied,bytesPerRow:128,bitsPerPixel:32),let pixels=bitmap.bitmapData else{return nil}
+        data.copyBytes(to:pixels,count:4096)
+        let image=NSImage(size:NSSize(width:32,height:32));image.addRepresentation(bitmap);return image
     }
     func tableViewSelectionDidChange(_ notification:Notification) {updateActions()}
     func numberOfRows(in tableView:NSTableView)->Int {rows.count}
@@ -246,9 +260,12 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
             let b=ManagerButton(title:actionTitle(row.action),target:self,action:#selector(rowAction(_:)))
             b.rowKey=row.key;b.bezelStyle = .rounded;b.controlSize = .small;b.isEnabled=row.action != "none"
             b.setAccessibilityLabel("\(b.title): \(row.title)");return b
+        case "detail":
+            let t=NSTextField(labelWithString:row.detail);t.textColor = .secondaryLabelColor;t.font = .monospacedDigitSystemFont(ofSize:11,weight:.regular)
+            let box=NSStackView(views:[t]);box.alignment = .centerY;return box
         case "state":
-            let label=stateTitle(row.state)+(app?.readOnly==true && row.viewing ? " · "+L("manager.read_only"):"")
-            let t=NSTextField(labelWithString:label);t.textColor = .secondaryLabelColor;t.font = .systemFont(ofSize:12)
+            let label=(row.hostMinimized && row.state=="available" ? L("manager.host_minimized"):stateTitle(row.state))+(app?.readOnly==true && row.viewing ? " · "+L("manager.read_only"):"")
+            let t=NSTextField(labelWithString:label);t.textColor = row.hostMinimized ? .systemOrange:.secondaryLabelColor;t.font = .systemFont(ofSize:11)
             t.lineBreakMode = .byTruncatingTail;t.toolTip=label;t.translatesAutoresizingMaskIntoConstraints=false
             let cell=NSView();cell.addSubview(t)
             NSLayoutConstraint.activate([t.centerYAnchor.constraint(equalTo:cell.centerYAnchor),t.leadingAnchor.constraint(equalTo:cell.leadingAnchor,constant:6),t.trailingAnchor.constraint(equalTo:cell.trailingAnchor,constant:-4)])
@@ -261,14 +278,21 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
                 let b=ManagerButton(title:expanded.contains(row.key) ? "▾":"▸",target:self,action:#selector(expandRow(_:)))
                 b.isBordered=false;b.rowKey=row.key;b.widthAnchor.constraint(equalToConstant:20).isActive=true
                 b.setAccessibilityLabel(L("manager.related"));box.addArrangedSubview(b)
-            } else {
-                let icon=NSImageView(image:NSImage(systemSymbolName:isRoot(row,in:all) ? "macwindow":"arrow.turn.down.right",accessibilityDescription:nil) ?? NSImage())
-                icon.contentTintColor = .secondaryLabelColor;icon.widthAnchor.constraint(equalToConstant:20).isActive=true;box.addArrangedSubview(icon)
             }
+            let icon=NSImageView(image:catalogIcon(row.icon) ?? NSImage(systemSymbolName:isRoot(row,in:all) ? "app.dashed":"arrow.turn.down.right",accessibilityDescription:nil) ?? NSImage())
+            icon.imageScaling = .scaleProportionallyUpOrDown
+            icon.widthAnchor.constraint(equalToConstant:28).isActive=true;icon.heightAnchor.constraint(equalToConstant:28).isActive=true
+            box.addArrangedSubview(icon)
             let title=NSTextField(labelWithString:row.title);title.lineBreakMode = .byTruncatingTail;title.toolTip=row.title
             title.font = .systemFont(ofSize:13,weight:row.viewing ? .medium:.regular)
             title.setContentCompressionResistancePriority(.defaultLow,for:.horizontal)
-            box.addArrangedSubview(title);return box
+            let subtitle=NSTextField(labelWithString:row.application.isEmpty ? L("manager.window_id",String(row.id)) : row.application)
+            subtitle.font = .systemFont(ofSize:11);subtitle.textColor = .secondaryLabelColor;subtitle.lineBreakMode = .byTruncatingMiddle
+            subtitle.setContentCompressionResistancePriority(.defaultLow,for:.horizontal)
+            let names=NSStackView(views:[title,subtitle]);names.orientation = .vertical;names.alignment = .leading;names.spacing=2
+            names.setContentCompressionResistancePriority(.defaultLow,for:.horizontal)
+            box.addArrangedSubview(names);box.toolTip="\(row.title)\n\(subtitle.stringValue)\n\(row.detail)"
+            return box
         }
     }
 }

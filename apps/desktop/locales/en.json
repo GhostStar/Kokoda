@@ -69,7 +69,7 @@
   "clipboard.empty": "The clipboard contains no supported text or image.",
   "error.input_backlog": "Input backlog: disconnected and released keys",
   "error.timeout": "Request timed out. Check the host, network and pairing folder access.",
-  "windows.untitled": "Application Window",
+  "windows.untitled": "Untitled Window",
   "windows.group_limit": "Showing up to sixteen windows in this application group",
   "error.invalid_response": "Invalid response received",
   "error.permission": "Access denied. Check file and network permissions.",
@@ -186,7 +186,7 @@
   "manager.hide": "Close local window",
   "manager.options": "Options",
   "manager.scope_tip": "Related-window scope applies when opening a new application. It never expands host sharing permissions.",
-  "manager.search": "Search window titles",
+  "manager.search": "Search titles or applications",
   "manager.window": "Window",
   "manager.state": "Status",
   "manager.action": "Action",
@@ -234,5 +234,14 @@
   "host.picker_stale": "This window changed or disappeared. Select it again from the refreshed list.",
   "host.picker_direct": "Direct match",
   "host.picker_owned": "Owned descendant",
-  "host.picker_preview_current": "Preview refreshed. The host revalidates windows when sharing."
+  "host.picker_preview_current": "Preview refreshed. The host revalidates windows when sharing.",
+  "manager.filter": "Show",
+  "manager.filter_apps": "Application windows",
+  "manager.filter_minimized": "Minimized windows",
+  "manager.filter_all": "All (including auxiliary windows)",
+  "manager.filter_tip": "Hide tooltips, background helpers and cloaked windows by default. Filters never change host sharing permissions.",
+  "manager.resolution": "Resolution / scale",
+  "manager.host_minimized": "Host minimized",
+  "manager.window_id": "Window %@",
+  "manager.no_filtered": "No windows match this filter. Try All (including auxiliary windows)."
 }

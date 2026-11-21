@@ -155,6 +155,22 @@ try {
  Click 101;Wait-Running
  $catalog=List-Windows
  Assert ($catalog.read_only -and @($catalog.windows | Where-Object {$_.title -notlike '*Kokoda*'}).Count -eq 0) 'GUI rule was not applied'
+ $own=@($catalog.windows | Where-Object {$_.process_id -eq $gui.Id})
+ Assert ($own.Count -gt 0) 'Synthetic GUI missing from catalog'
+ foreach($item in $own) {
+  Assert ($item.catalog.executable -eq 'KokodaHost.exe') 'Catalog executable identity missing'
+  Assert ($item.catalog.width -gt 0 -and $item.catalog.height -gt 0 -and $item.catalog.dpi -ge 96) 'Catalog size/DPI missing'
+  Assert (!$item.catalog.auxiliary) 'Normal application was filtered as auxiliary'
+  Assert ($item.catalog.executable -notmatch '[/\\:]') 'Catalog leaked executable path'
+  Assert ($item.catalog.icon_rgba32) 'Embedded application icon missing'
+  $pixels=[Convert]::FromBase64String($item.catalog.icon_rgba32)
+  Assert ($pixels.Length -eq 4096) 'Catalog icon exceeds fixed size'
+  $visible=0;for($i=3;$i -lt $pixels.Length;$i+=4){if($pixels[$i] -gt 0){$visible++}}
+  Assert ($visible -gt 0 -and $visible -lt 1024) 'Icon lost foreground or transparency'
+
+ }
+
+ $own[0].catalog | ConvertTo-Json -Compress | Set-Content -Encoding UTF8 (Join-Path $ResultDirectory 'catalog-fixture.json')
  Click 102;Wait-Stopped $workerId
  # Capture only the test GUI, never the user's desktop.
  $rect=New-Object HostGuiNative+Rect;[HostGuiNative]::GetWindowRect($window,[ref]$rect)|Out-Null
@@ -166,7 +182,19 @@ try {
  [HostGuiNative]::SendMessage($window,0x111,[IntPtr](104 -bor (1 -shl 16)),[IntPtr]::Zero)|Out-Null
  Click 101;Wait-Running
  # Full-control mode is checked through persisted selection and capability, without logging private titles.
- $catalog=List-Windows;Assert (!$catalog.read_only) 'Explicit all-window mode remains read-only';$catalog=$null
+ $normal=New-Object Windows.Forms.Form;$normal.Text='';$normal.Show()
+ $helper=New-Object Windows.Forms.Form;$helper.Text='';$helper.FormBorderStyle='FixedToolWindow';$helper.ShowInTaskbar=$false;$helper.Show()
+ $mini=New-Object Windows.Forms.Form;$mini.Text='Kokoda minimized fixture';$mini.Show();$mini.WindowState='Minimized'
+ $fixtures=@($normal,$helper,$mini);[Windows.Forms.Application]::DoEvents()
+ $catalog=List-Windows;Assert (!$catalog.read_only) 'Explicit all-window mode remains read-only'
+ $normalRow=@($catalog.windows | Where-Object {$_.id -eq $normal.Handle.ToInt64()})
+ $helperRow=@($catalog.windows | Where-Object {$_.id -eq $helper.Handle.ToInt64()})
+ $miniRow=@($catalog.windows | Where-Object {$_.id -eq $mini.Handle.ToInt64()})
+ Assert ($normalRow.Count -eq 1 -and !$normalRow[0].catalog.auxiliary -and $normalRow[0].catalog.executable) 'Titleless normal application lost identity or was filtered'
+ Assert ($helperRow.Count -eq 1 -and $helperRow[0].catalog.auxiliary) 'Tool window not marked auxiliary'
+ Assert ($miniRow.Count -eq 1 -and $miniRow[0].minimized -and $miniRow[0].catalog.height -gt 100) 'Minimized window lost restored size'
+ $catalog=$null
+ foreach($f in $fixtures){$f.Close();$f.Dispose()};$fixtures=@()
  [HostGuiNative]::PostMessage($window,0x10,[IntPtr]::Zero,[IntPtr]::Zero)|Out-Null
  Assert ($gui.WaitForExit(10000)) 'GUI did not close';Wait-Stopped $workerId
  Open-Gui

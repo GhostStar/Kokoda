@@ -6,6 +6,11 @@ struct ManagerRow: Equatable {
     let sessionID: UInt64?
     let token: UInt64?
     let title: String
+    let application: String
+    let icon: String
+    let detail: String
+    let auxiliary: Bool
+    let hostMinimized: Bool
     let parent: UInt64?
     let role: String
     let state: String
@@ -34,20 +39,30 @@ extension AppDelegate {
         var result:[ManagerRow]=[]
         var represented=Set<UInt64>()
         func append(id:UInt64,sid:UInt64?,surface:RemoteSurface?,title:String,opening:Bool=false,ending:Bool=false) {
-            let role=surface?.role ?? "independent"
+            let entry=windows.first{($0["id"] as? NSNumber)?.uint64Value==id} ?? [:]
+            let metadata=entry["catalog"] as? [String:Any] ?? [:]
+            let application=metadata["executable"] as? String ?? ""
+            let role=surface?.role ?? metadata["role"] as? String ?? "independent"
             guard role != "transient" else{return}
-            let title=title.isEmpty ? L("windows.untitled"):title
+            let title=title.isEmpty ? (application.isEmpty ? L("windows.untitled") : application + " — " + L("windows.untitled")):title
+            let width=(metadata["width"] as? NSNumber)?.intValue ?? 0
+            let height=(metadata["height"] as? NSNumber)?.intValue ?? 0
+            let dpi=(metadata["dpi"] as? NSNumber)?.intValue ?? 96
+            let detail=width>0 && height>0 ? "\(width) × \(height) · \(Int((Double(dpi)*100/96).rounded()))%" : "—"
+            let hostMinimized=entry["minimized"] as? Bool ?? false
             let blocked=surface?.presentation?.enabled == false
             let modal=sid.flatMap{sessions[$0]}.flatMap{modalViewer(for:id,in:$0)}
             let model=workflow.dispatch(["type":"manager_row","connected":authenticated,
-                "title":String(title.prefix(4096)),"query":String(query.prefix(1024)),"viewing":sid != nil,
+                "title":String(title.prefix(4096)),"application":String(application.prefix(512)),"query":String(query.prefix(1024)),"viewing":sid != nil,
                 "opening":opening,"ending":ending,"closed":surface?.locallyClosed ?? false,
                 "minimized":surface?.window.isMiniaturized ?? false,"blocked":blocked,"modal_available":modal != nil])
             let key:String
             if let sid=sid {key="\(generation):s\(sid):w\(id):\(surface.map{String($0.token)} ?? "opening")"}
             else {key="\(generation):c\(managerCatalogIDs[id]?.serial ?? 0):w\(id)"}
             result.append(ManagerRow(key:key,id:id,sessionID:sid,token:surface?.token,title:title,
-                parent:surface?.presentation?.owner,role:role,state:model["state"] as! String,
+                application:application,icon:metadata["icon_rgba32"] as? String ?? "",detail:detail,
+                auxiliary:metadata["auxiliary"] as? Bool ?? false,hostMinimized:hostMinimized,
+                parent:surface?.presentation?.owner ?? (entry["owner"] as? NSNumber)?.uint64Value,role:role,state:model["state"] as! String,
                 action:model["action"] as! String,rank:model["rank"] as! Int))
         }
         for state in sessions.values.sorted(by:{$0.id<$1.id}) {
@@ -64,8 +79,7 @@ extension AppDelegate {
         }
         for entry in windows {
             guard let id=(entry["id"] as? NSNumber)?.uint64Value,!represented.contains(id) else{continue}
-            // The catalog does not yet carry window roles. Retain selectable
-            // entries instead of guessing ownership from process names.
+            // Additive host metadata is display-only; actions still revalidate identity.
             let ending=sessions.values.contains{$0.ending && $0.requestedRoot==id}
             append(id:id,sid:nil,surface:nil,title:entry["title"] as? String ?? "",ending:ending)
         }

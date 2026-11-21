@@ -9,5 +9,6 @@
   {"name":"unknown modal blocks input","input":{"connected":true,"viewing":true,"blocked":true},"expected":{"state":"blocked","action":"none","rank":0}},
   {"name":"disconnect overrides cached viewer","input":{"connected":false,"viewing":true,"closed":true},"expected":{"state":"offline","action":"none","rank":0}},
   {"name":"unmatched title","input":{"connected":true,"title":"工作聊天","query":"other"},"expected":{"state":"available","action":"open","rank":-1}},
-  {"name":"Chinese substring","input":{"connected":true,"title":"工作聊天","query":"聊天"},"expected":{"state":"available","action":"open","rank":1}}
+  {"name":"Chinese substring","input":{"connected":true,"title":"工作聊天","query":"聊天"},"expected":{"state":"available","action":"open","rank":1}},
+  {"name":"executable search","input":{"connected":true,"title":"Project notes","application":"Notepad.exe","query":"NOTEPAD"},"expected":{"state":"available","action":"open","rank":1}}
 ]

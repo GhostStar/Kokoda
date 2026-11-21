@@ -268,7 +268,7 @@ fn serve_authenticated(
                             serde_json::json!({"type":"closed"})
                         }
                         "list_windows" => {
-                            serde_json::json!({"type":"windows", "multi_session":true,"window_video_alpha":true,"anchored_pointer":true,"window_management":true,"resolution_bitrate":true,"playback_feedback":true,"push_video":true,"live_video_settings":true,"max_sessions":8,"read_only":sharing.restricted(),"windows":sharing.catalog()?})
+                            serde_json::json!({"type":"windows", "multi_session":true,"window_video_alpha":true,"anchored_pointer":true,"window_management":true,"resolution_bitrate":true,"playback_feedback":true,"push_video":true,"live_video_settings":true,"max_sessions":8,"read_only":sharing.restricted(),"windows":kokoda_platform_windows::catalog::describe(sharing.catalog()?)})
                         }
                         "select_window" => {
                             if groups.len() >= kokoda_protocol::MAX_SESSIONS {

@@ -100,8 +100,38 @@ deliver(["type":"error","session_id":1,"selection_lost":true,"message":"Syntheti
 precondition(!c.managerRows().contains{$0.id==1 || $0.id==4})
 c.activateManagerRow(revokedRow);precondition(c.sessions[1]==nil)
 print("PASS: revocation removes private catalog metadata and disables stale actions")
-// Rebuild harmless synthetic previews after revocation.
-catalog([entry(20,"Notes — Project plan"),entry(21,"Browser — Documentation"),entry(22,"")])
+// Representative metadata, including a normal titleless app and auxiliary surface.
+func rich(_ id:UInt64,_ title:String,_ executable:String,auxiliary:Bool=false,minimized:Bool=false)->[String:Any] {
+    var e=entry(id,title)
+    var pixels=[UInt8](repeating:0,count:4096)
+    for i in stride(from:0,to:4096,by:4) {pixels[i]=40;pixels[i+1]=UInt8(90+id*3);pixels[i+2]=180;pixels[i+3]=255}
+    e["catalog"]=["executable":executable,"icon_rgba32":Data(pixels).base64EncodedString(),"width":1280,"height":900,"dpi":144,"auxiliary":auxiliary,"role":"independent"]
+    e["minimized"]=minimized
+    return e
+}
+let fixtures=[rich(20,"Notes — Project plan","notepad.exe"),rich(21,"Browser — Documentation","msedge.exe"),rich(22,"","Paint.exe"),rich(23,"Helper overlay","helper.exe",auxiliary:true),rich(24,"Draft — Meeting notes","notepad.exe",minimized:true)]
+catalog(fixtures)
+precondition(manager.rows.count==4 && !manager.rows.contains{$0.id==23})
+precondition(manager.rows.first{$0.id==22}!.title.contains("Paint.exe"))
+precondition(manager.rows.first{$0.id==20}!.detail=="1280 × 900 · 150%")
+precondition(manager.catalogIcon(manager.rows[0].icon) != nil && manager.catalogIcon("invalid")==nil)
+manager.search.stringValue="NOTEPAD";manager.refresh(force:true)
+precondition(manager.rows.map{$0.id}.sorted()==[20,24])
+manager.search.stringValue="";manager.filter.selectItem(at:1);manager.refresh(force:true)
+precondition(manager.rows.map{$0.id}==[24])
+manager.filter.selectItem(at:2);manager.refresh(force:true)
+precondition(manager.rows.count==5)
+manager.filter.selectItem(at:0);manager.refresh(force:true)
+print("PASS: app identity, bounded icons, process search, auxiliary opt-in, minimized filter and resolution/DPI")
+if let fixture=ProcessInfo.processInfo.environment["KOKODA_CATALOG_FIXTURE"] {
+    let data=try Data(contentsOf:URL(fileURLWithPath:fixture))
+    let metadata=try JSONSerialization.jsonObject(with:data) as! [String:Any]
+    precondition(manager.catalogIcon(metadata["icon_rgba32"] as! String) != nil)
+    var actual=entry(25,"Kokoda — Window sharing");actual["catalog"]=metadata
+    catalog(fixtures+[actual])
+    print("PASS: actual Windows executable icon decodes in the Mac manager")
+}
+
 c.openManagerWindow(20)
 let previewSID=c.sessions.values.first{$0.requestedRoot==20}!.id
 deliver(["type":"selected","session_id":previewSID,"id":20,"window_groups":true])
@@ -124,6 +154,15 @@ for view in stack.arrangedSubviews where !view.isHidden {
     precondition(rect.minY>=0 && rect.maxY<=content.bounds.height+1,"Expanded options overflow")
 }
 manager.options.isHidden=true
+// The smallest supported manager also keeps controls inside the content area.
+let originalSize=c.window.contentView!.bounds.size
+c.window.setContentSize(NSSize(width:840,height:720));manager.options.isHidden=false
+content.layoutSubtreeIfNeeded()
+for view in stack.arrangedSubviews where !view.isHidden {
+    let r=view.convert(view.bounds,to:content)
+    precondition(r.minX>=0 && r.maxX<=content.bounds.width+1 && r.minY>=0 && r.maxY<=content.bounds.height+1,"Minimum manager size overflow")
+}
+manager.options.isHidden=true;c.window.setContentSize(originalSize)
 c.window.makeKeyAndOrderFront(nil)
 RunLoop.current.run(until:Date().addingTimeInterval(0.3))
 c.window.displayIfNeeded()

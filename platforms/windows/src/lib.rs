@@ -15,3 +15,5 @@ pub mod windows;
 pub mod credentials;
 
 pub mod window_management;
+
+pub mod catalog;
