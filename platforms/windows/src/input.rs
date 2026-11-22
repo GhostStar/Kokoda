@@ -62,6 +62,39 @@ fn inject(input: &mut INPUT) -> Result<()> {
     Ok(())
 }
 
+// Diagnostic only: HTTRANSPARENT is not permission to inject through a window.
+// Its routing semantics depend on the owning thread. Never use this query to
+// broaden Target::hit, and bound cross-process calls for hung/elevated windows.
+fn hit_test_kind(window: HWND, point: POINT) -> &'static str {
+    if window.is_null() || i16::try_from(point.x).is_err() || i16::try_from(point.y).is_err() {
+        return "unavailable";
+    }
+    let packed = (point.x as u16 as u32) | ((point.y as u16 as u32) << 16);
+    let mut value = 0;
+    if unsafe {
+        SendMessageTimeoutW(
+            window,
+            WM_NCHITTEST,
+            0,
+            packed as i32 as isize,
+            SMTO_ABORTIFHUNG | SMTO_BLOCK | SMTO_ERRORONEXIT,
+            50,
+            &mut value,
+        )
+    } == 0
+    {
+        return "unavailable";
+    }
+    match value as isize {
+        HTTRANSPARENT => "transparent",
+        HTNOWHERE => "nowhere",
+        HTCLIENT => "client",
+        HTCAPTION => "caption",
+        HTERROR => "error",
+        _ => "nonclient",
+    }
+}
+
 fn key(vk: u16, down: bool) -> Result<()> {
     let mut input: INPUT = unsafe { mem::zeroed() };
     input.type_ = INPUT_KEYBOARD;
@@ -319,10 +352,33 @@ impl Target {
             } else {
                 "other_process_surface"
             };
-            // No title, path, class or identity of an unauthorized window is exposed.
-            format!("Target is obscured at pointer location [reason={reason}; dpi={}; foreground={}; layered={}]",
+            let mut bounds: RECT = mem::zeroed();
+            let inside_window = GetWindowRect(self.window, &mut bounds) != 0
+                && point.x >= bounds.left
+                && point.x < bounds.right
+                && point.y >= bounds.top
+                && point.y < bounds.bottom;
+            let hit_style = GetWindowLongW(hit, GWL_EXSTYLE) as u32;
+            let root = GetAncestor(hit, GA_ROOT);
+            let surface = if root == GetDesktopWindow() || root == GetShellWindow() {
+                "desktop"
+            } else if hit_style & (WS_EX_LAYERED | WS_EX_TRANSPARENT)
+                == WS_EX_LAYERED | WS_EX_TRANSPARENT
+            {
+                "click_through_layer"
+            } else if hit_style & WS_EX_LAYERED != 0 {
+                "layered"
+            } else {
+                "normal"
+            };
+            // These are categories, not titles, paths, classes, PIDs or HWNDs of
+            // other applications. Distinguish coordinate/hit-test disagreement
+            // from actual covering windows without exposing their identity.
+            format!("Target is obscured at pointer location [reason={reason}; dpi={}; foreground={}; layered={}; inside_window={inside_window}; hit_surface={surface}; hit_topmost={}; point_agrees={}; target_hit={}; surface_hit={}]",
                 GetDpiForWindow(self.window), GetForegroundWindow()==self.window,
-                GetWindowLongW(self.window,GWL_EXSTYLE) as u32 & WS_EX_LAYERED != 0)
+                GetWindowLongW(self.window,GWL_EXSTYLE) as u32 & WS_EX_LAYERED != 0,
+                hit_style & WS_EX_TOPMOST != 0, WindowFromPoint(point)==hit,
+                hit_test_kind(self.window,point), hit_test_kind(hit,point))
         }
     }
 

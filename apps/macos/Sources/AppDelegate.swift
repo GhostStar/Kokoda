@@ -344,6 +344,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     func startConnection() {
         guard wantsConnection,!sleeping else{return}
+        status.toolTip=nil
+        manager?.discovery.stop()
         guard (8...128).contains(password.stringValue.unicodeScalars.count), !password.stringValue.unicodeScalars.contains(where: {CharacterSet.controlCharacters.contains($0)}), !password.stringValue.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty else {
             connectionFailed(L("error.password_required"),retryable:false);return
         }
@@ -892,6 +894,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             case "pong":
                 heartbeatMS=response["round_trip_ms"] as? Double
             case "windows":
+                status.toolTip=nil
                 authenticated=true;reconnectAttempt=0
                 readOnly=response["read_only"] as? Bool ?? false
                 syncRemoteClipboard.isEnabled = !readOnly
@@ -993,6 +996,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     if contextSessionID != 0 {sessions.removeValue(forKey:contextSessionID)}
                 }
                 status.stringValue = response["command"] as? String=="window_action" ? L("error.window_action") : (response["message"] as? String ?? L("error.remote"))
+                status.toolTip=response["message"] as? String
                 lastGroup = .distantPast
             default: break
             }

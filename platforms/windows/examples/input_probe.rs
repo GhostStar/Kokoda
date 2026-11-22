@@ -197,9 +197,41 @@ fn main() {
         .unwrap_err()
         .to_string();
     assert!(error.contains("reason=same_process_surface"));
+    assert!(error.contains("inside_window=true"), "{error}");
+    assert!(error.contains("hit_surface=normal"), "{error}");
+    assert!(error.contains("hit_topmost=true"), "{error}");
+    assert!(error.contains("target_hit=client"), "{error}");
+    assert!(error.contains("surface_hit=client"), "{error}");
     assert_eq!(WHEELS.load(SeqCst), 1);
     target.release().unwrap();
     println!("PASS: a real covering window is rejected without leaking its identity or injecting through it");
+    unsafe {
+        SetWindowLongW(
+            cover as HWND,
+            GWL_EXSTYLE,
+            (GetWindowLongW(cover as HWND, GWL_EXSTYLE) as u32 | WS_EX_LAYERED | WS_EX_TRANSPARENT)
+                as i32,
+        );
+        assert_ne!(
+            SetLayeredWindowAttributes(cover as HWND, 0, 180, LWA_ALPHA),
+            0
+        );
+    }
+    target
+        .apply(InputEvent::WheelAt {
+            x: 0.5,
+            y: 0.5,
+            width,
+            height,
+            delta: 120,
+        })
+        .unwrap();
+    wait("wheel through click-through overlay", || {
+        WHEELS.load(SeqCst) == 2
+    });
+    println!(
+        "PASS: Windows routes through a layered transparent overlay without relaxing target checks"
+    );
     drop(cleanup);
     ui.join().unwrap();
 }

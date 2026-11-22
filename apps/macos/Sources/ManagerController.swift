@@ -119,7 +119,7 @@ final class ManagerController:NSObject,NSTableViewDataSource,NSTableViewDelegate
         empty.textColor = .secondaryLabelColor;empty.maximumNumberOfLines=2;add(empty)
         button(primary,#selector(activateSelected));button(hideButton,#selector(hideSelected));button(endButton,#selector(endSelected))
         let actions=NSStackView(views:[hideButton,endButton]);add(actions)
-        app.status.maximumNumberOfLines=2;app.status.lineBreakMode = .byWordWrapping;add(app.status)
+        app.status.maximumNumberOfLines=2;app.status.lineBreakMode = .byWordWrapping;app.status.isSelectable=true;add(app.status)
         app.metrics.maximumNumberOfLines=3;app.metrics.lineBreakMode = .byWordWrapping;app.metrics.textColor = .secondaryLabelColor
         app.metrics.font = .systemFont(ofSize:11);app.metrics.toolTip=L("stats.tip");add(app.metrics)
         app.window.find={[weak self] in self?.focusSearch()}

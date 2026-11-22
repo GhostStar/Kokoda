@@ -21,3 +21,5 @@
 ## 验证
 
 `cargo test --workspace --locked` 覆盖发现元数据拒绝、规则示例及所属关系合同。`DiscoveryTests` 验证 Mac 原生选择不会自动登录、密码隔离与手动地址回退。`HostGui.Tests.ps1` 使用合成 Windows 窗口操作选择器，验证所属／独立窗口预览、保存组合规则及既有密码／共享生命周期。`cargo run -p kokoda-discovery --example probe -- lifecycle` 验证真实广播与撤销；`probe announce NAME PORT SECONDS`／`probe find NAME SECONDS` 用于两机隔离测试。仅使用合成名称，完成后关闭夹具。
+
+开始连接时暂停发现并保留最近的结果。连接失败不会重新扫描；需要时点击“搜索局域网”。每次连接会清除旧错误详情。远端错误可在状态区选择复制，也可悬停查看完整内容。

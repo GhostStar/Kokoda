@@ -11,9 +11,19 @@ precondition(c.host.stringValue=="192.0.2.11:47832" && c.password.stringValue.is
 c.password.stringValue="Synthetic-password"
 d.apply([["id":"second","name":"Renamed","addresses":["192.0.2.11:47832"]]])
 precondition((d.choices.selectedItem?.representedObject as? [String:String])?["address"]=="192.0.2.11:47832")
+c.wantsConnection=true;d.tick()
+precondition(!d.choices.isEnabled && !d.refreshButton.isEnabled)
+precondition((d.choices.selectedItem?.representedObject as? [String:String])?["address"]=="192.0.2.11:47832")
+d.refresh() // A delayed click while connecting cannot reset the picker.
+precondition(d.choices.numberOfItems==2)
+c.wantsConnection=false;d.tick()
+precondition(d.choices.isEnabled && d.refreshButton.isEnabled)
+precondition(d.choices.numberOfItems==2)
 c.wantsConnection=true;c.host.stringValue="192.0.2.20:47831";d.selectHost();precondition(c.host.stringValue=="192.0.2.20:47831")
 c.wantsConnection=false;d.apply([]);precondition(d.choices.numberOfItems==1)
 d.selectHost();precondition(c.host.stringValue=="192.0.2.20:47831")
+d.refresh();precondition(d.choices.itemTitle(at:0)==L("discovery.searching"))
+d.stop();precondition(d.choices.itemTitle(at:0) != L("discovery.searching"))
 c.manager!.options.isHidden=false;c.window.contentView!.layoutSubtreeIfNeeded()
 let content=c.window.contentView!;let stack=content.subviews.first as! NSStackView
 for view in stack.arrangedSubviews where !view.isHidden {

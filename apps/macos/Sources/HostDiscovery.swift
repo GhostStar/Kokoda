@@ -17,13 +17,25 @@ final class HostDiscovery:NSObject {
         refreshButton.target=self;refreshButton.action=#selector(refresh);refreshButton.bezelStyle = .rounded
         hint.font = .systemFont(ofSize:11);hint.textColor = .secondaryLabelColor
     }
-    func stop() {if active {app?.workflow.dispatch(["type":"discovery_stop"])};active=false;signature="";choices.removeAllItems();choices.addItem(withTitle:L("discovery.searching"))}
-    @objc func refresh() {stop();attempted=false;lastPoll = .distantPast;tick()}
+    func stop() {
+        if active {app?.workflow.dispatch(["type":"discovery_stop"])}
+        active=false;attempted=true
+        // Preserve discovered endpoints and selection while connecting. A stopped
+        // browser must not look active or restart because authentication failed.
+        if choices.numberOfItems==1 && choices.itemTitle(at:0)==L("discovery.searching") {
+            choices.removeAllItems();choices.addItem(withTitle:L("discovery.choose"))
+        }
+    }
+    @objc func refresh() {
+        guard let app=app,!app.authenticated,app.process==nil,!app.wantsConnection else{return}
+        stop();attempted=false;signature="";lastPoll = .distantPast
+        choices.removeAllItems();choices.addItem(withTitle:L("discovery.searching"));tick()
+    }
     func tick() {
         guard let app=app else{return}
         let busy=app.authenticated || app.process != nil || app.wantsConnection
         choices.isEnabled = !busy;refreshButton.isEnabled = !busy
-        if busy {if active {stop()};attempted=false;return}
+        if busy {stop();return}
         guard !disabledForTests,Date().timeIntervalSince(lastPoll)>1 else{return};lastPoll=Date()
         if !active {
             guard !attempted else{return};attempted=true

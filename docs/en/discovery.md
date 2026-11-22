@@ -21,3 +21,5 @@ The computers need multicast reachability, usually on the same LAN. Guest Wi-Fi,
 ## Verification
 
 `cargo test --workspace --locked` includes metadata rejection and rule-example/owner contracts. `DiscoveryTests` checks native Mac selection without automatic login, password isolation and manual-address fallback. `HostGui.Tests.ps1` operates synthetic Windows forms, previews owned versus independent windows and validates the saved combined rule plus normal password/sharing lifecycle. `cargo run -p kokoda-discovery --example probe -- lifecycle` checks real advertisement and goodbye; `probe announce NAME PORT SECONDS` / `probe find NAME SECONDS` are isolated two-machine fixtures. Only use synthetic names and stop fixtures afterward.
+
+Starting a connection pauses discovery and preserves its last results. A failed connection does not restart scanning; use **Search LAN** explicitly. Connection attempts clear old error details. Remote errors can be selected/copied in the status area, or read in full by hovering over it.
