@@ -36,6 +36,7 @@ void Session::begin() {
     connection = new Connection(this);
     auto epoch = ++generation;
     authenticated = false;
+    positionedWheel = false;
     streamStarted = false;
     queued.clear();
     pending.clear();
@@ -58,6 +59,7 @@ void Session::disconnectHost() {
     retry.stop();
     ++generation;
     authenticated = false;
+    positionedWheel = false;
     streamStarted = false;
     queued.clear();
     pending.clear();
@@ -75,6 +77,7 @@ void Session::disconnectHost() {
 }
 void Session::lost(QString category, bool retryable) {
     authenticated = false;
+    positionedWheel = false;
     streamStarted = false;
     queued.clear();
     pending.clear();
@@ -399,6 +402,7 @@ void Session::group(AppSession &state, QJsonObject message) {
         auto *v = state.viewers.value(number(entry, "id"));
         if (v) {
             v->connected = true;
+            v->canvas->positionedWheel = positionedWheel;
             v->updateWindow(entry, readOnly,
                             state.viewers.value(number(entry["presentation"].toObject(), "owner")));
             if (restored.contains(v->id)) {
@@ -428,6 +432,7 @@ void Session::receive(QJsonObject message) {
         bool first = !authenticated;
         authenticated = true;
         readOnly = message["read_only"].toBool(true);
+        positionedWheel = message["positioned_wheel"].toBool();
         catalog = message["windows"].toArray();
         if (!message["window_management"].toBool() || !message["playback_feedback"].toBool() ||
             !message["push_video"].toBool()) {

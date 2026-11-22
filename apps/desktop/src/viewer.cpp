@@ -197,10 +197,10 @@ void Canvas::keyReleaseEvent(QKeyEvent *event) {
 QJsonObject Canvas::point(QPointF p, const char *kind) const {
     auto display = imageRect();
     return {{"kind", kind},
-            {"x", (p.x() - display.x()) * width() / qMax(1., display.width())},
-            {"y", (p.y() - display.y()) * height() / qMax(1., display.height())},
-            {"width", width()},
-            {"height", height()}};
+            {"x", qBound(0., (p.x() - display.x()) / qMax(1., display.width()), 0.999999)},
+            {"y", qBound(0., (p.y() - display.y()) / qMax(1., display.height()), 0.999999)},
+            {"width", source.width()},
+            {"height", source.height()}};
 }
 QJsonObject Canvas::delta(QPointF p, const char *kind) const {
     QPointF d = p - dragOrigin;
@@ -259,11 +259,14 @@ void Canvas::mouseReleaseEvent(QMouseEvent *e) {
     }
 }
 void Canvas::wheelEvent(QWheelEvent *e) {
-    if (allowed) {
-        setFocus();
-        emit input({{"kind", "wheel"}, {"delta", e->angleDelta().y()}});
-        e->accept();
-    }
+    if (!allowed || gesture || source.isEmpty() || !imageRect().contains(e->position())) return;
+    const int delta=qBound(-1200,e->angleDelta().y(),1200);
+    if (!delta) return;
+    setFocus();
+    auto event=point(e->position(),positionedWheel ? "wheel_at":"move");
+    if (positionedWheel) {event["delta"]=delta;emit input(event);}
+    else {emit input(event);emit input({{"kind","wheel"},{"delta",delta}});}
+    e->accept();
 }
 void Canvas::focusInEvent(QFocusEvent *e) {
     QWidget::focusInEvent(e);

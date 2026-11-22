@@ -28,6 +28,30 @@ pub struct Target {
     last_gesture: u64,
 }
 
+// Input always uses the same physical coordinate space as DWM capture bounds,
+// even if a caller or a native callback changed this thread's DPI context.
+struct PhysicalCoordinates(winapi::shared::windef::DPI_AWARENESS_CONTEXT);
+impl PhysicalCoordinates {
+    fn enter() -> Result<Self> {
+        let previous = unsafe {
+            SetThreadDpiAwarenessContext(
+                winapi::shared::windef::DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
+            )
+        };
+        if previous.is_null() {
+            return Err(io::Error::last_os_error().into());
+        }
+        Ok(Self(previous))
+    }
+}
+impl Drop for PhysicalCoordinates {
+    fn drop(&mut self) {
+        unsafe {
+            SetThreadDpiAwarenessContext(self.0);
+        }
+    }
+}
+
 fn inject(input: &mut INPUT) -> Result<()> {
     if unsafe { SendInput(1, input, mem::size_of::<INPUT>() as i32) } != 1 {
         return Err(io::Error::other(
@@ -221,7 +245,7 @@ impl Target {
         Ok(())
     }
 
-    fn point(&self, x: f64, y: f64, width: u32, height: u32, activate: bool) -> Result<()> {
+    fn resolve_point(&self, x: f64, y: f64, width: u32, height: u32) -> Result<POINT> {
         if !x.is_finite() || !y.is_finite() || !(0.0..1.0).contains(&x) || !(0.0..1.0).contains(&y)
         {
             return Err("Pointer is outside the image".into());
@@ -242,10 +266,14 @@ impl Target {
         {
             return Err("Window resized; wait for the next frame".into());
         }
-        let point = POINT {
+        Ok(POINT {
             x: bounds.left + (x * width as f64) as i32,
             y: bounds.top + (y * height as f64) as i32,
-        };
+        })
+    }
+
+    fn point(&self, x: f64, y: f64, width: u32, height: u32, activate: bool) -> Result<()> {
+        let mut point = self.resolve_point(x, y, width, height)?;
         if !self.hit(point) {
             // Hover over a covered/disabled owner must not steal focus from its
             // dialog or block the connection in foreground activation retries.
@@ -253,20 +281,69 @@ impl Target {
                 return Ok(());
             }
             self.activate()?;
+            // Activation can move a popup or change its layout. Never reuse the
+            // pre-activation screen location; a changed size requires a fresh frame.
+            self.validate()?;
+            point = self.resolve_point(x, y, width, height)?;
             if !self.hit(point) {
-                return Err("Target is obscured at pointer location".into());
+                return Err(self.pointer_error(point).into());
             }
         }
         // Do not force activation for already-visible popups: hover cards may hide on focus change.
-        if unsafe { SetCursorPos(point.x, point.y) } == 0 {
+        if unsafe { SetPhysicalCursorPos(point.x, point.y) } == 0 {
             return Err(io::Error::last_os_error().into());
         }
         Ok(())
     }
 
     fn hit(&self, point: POINT) -> bool {
-        let hit = unsafe { WindowFromPoint(point) };
+        let hit = unsafe { WindowFromPhysicalPoint(point) };
         hit == self.window || unsafe { IsChild(self.window, hit) } != 0
+    }
+
+    fn pointer_error(&self, point: POINT) -> String {
+        unsafe {
+            let hit = WindowFromPhysicalPoint(point);
+            let mut pid = 0;
+            if !hit.is_null() {
+                GetWindowThreadProcessId(hit, &mut pid);
+            }
+            let reason = if IsWindowEnabled(self.window) == 0 {
+                "modal_disabled"
+            } else if MonitorFromPoint(point, MONITOR_DEFAULTTONULL).is_null() {
+                "off_screen"
+            } else if hit.is_null() {
+                "no_hit"
+            } else if pid == self.process_id {
+                "same_process_surface"
+            } else {
+                "other_process_surface"
+            };
+            // No title, path, class or identity of an unauthorized window is exposed.
+            format!("Target is obscured at pointer location [reason={reason}; dpi={}; foreground={}; layered={}]",
+                GetDpiForWindow(self.window), GetForegroundWindow()==self.window,
+                GetWindowLongW(self.window,GWL_EXSTYLE) as u32 & WS_EX_LAYERED != 0)
+        }
+    }
+
+    fn wheel(&self, delta: i32) -> Result<()> {
+        if !(-1200..=1200).contains(&delta) {
+            return Err("Wheel delta exceeds limit".into());
+        }
+        let mut point: POINT = unsafe { mem::zeroed() };
+        if unsafe { GetPhysicalCursorPos(&mut point) } == 0 {
+            return Err(io::Error::last_os_error().into());
+        }
+        if !self.hit(point) {
+            return Err(self.pointer_error(point).into());
+        }
+        let mut input: INPUT = unsafe { mem::zeroed() };
+        input.type_ = INPUT_MOUSE;
+        unsafe {
+            input.u.mi_mut().dwFlags = MOUSEEVENTF_WHEEL;
+            input.u.mi_mut().mouseData = delta as u32;
+        }
+        inject(&mut input)
     }
 
     fn drag_point(&self, gesture: u64, dx: f64, dy: f64) -> Result<()> {
@@ -289,7 +366,7 @@ impl Target {
         if !captured && !self.hit(point) {
             return Err("Pointer gesture lost target capture".into());
         }
-        if unsafe { SetCursorPos(x, y) } == 0 {
+        if unsafe { SetPhysicalCursorPos(x, y) } == 0 {
             return Err(io::Error::last_os_error().into());
         }
         Ok(())
@@ -308,6 +385,7 @@ impl Target {
                 return Ok(());
             }
         }
+        let _coordinates = PhysicalCoordinates::enter()?;
         self.validate()?;
         if matches!(event, InputEvent::Key { .. } | InputEvent::Text { .. }) {
             self.activate()?;
@@ -329,7 +407,7 @@ impl Target {
                 }
                 self.point(x, y, width, height, true)?;
                 let mut point: POINT = unsafe { mem::zeroed() };
-                if unsafe { GetCursorPos(&mut point) } == 0 {
+                if unsafe { GetPhysicalCursorPos(&mut point) } == 0 {
                     return Err(io::Error::last_os_error().into());
                 }
                 button(0, true)?;
@@ -374,22 +452,20 @@ impl Target {
                     self.buttons.remove(&which);
                 }
             }
-            InputEvent::Wheel { delta } => {
-                let mut point: POINT = unsafe { mem::zeroed() };
-                if unsafe { GetCursorPos(&mut point) } == 0 || !self.hit(point) {
-                    return Err("Move the pointer onto the target before scrolling".into());
-                }
+            InputEvent::WheelAt {
+                x,
+                y,
+                width,
+                height,
+                delta,
+            } => {
                 if !(-1200..=1200).contains(&delta) {
                     return Err("Wheel delta exceeds limit".into());
                 }
-                let mut input: INPUT = unsafe { mem::zeroed() };
-                input.type_ = INPUT_MOUSE;
-                unsafe {
-                    input.u.mi_mut().dwFlags = MOUSEEVENTF_WHEEL;
-                    input.u.mi_mut().mouseData = delta as u32;
-                }
-                inject(&mut input)?;
+                self.point(x, y, width, height, true)?;
+                self.wheel(delta)?;
             }
+            InputEvent::Wheel { delta } => self.wheel(delta)?,
             InputEvent::Key { vk, down } => {
                 if !(8..=254).contains(&vk) {
                     return Err("Unsupported virtual key".into());

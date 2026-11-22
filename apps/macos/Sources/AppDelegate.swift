@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var supportsPlaybackFeedback = false
     var asynchronousRequests: [Date] = []
     var playbackFeedback: [[String:Any]] = []
+    var supportsPositionedWheel = false
     var supportsAnchoredPointer = false
     var supportsWindowVideoAlpha = false
     var supportsLiveSettings = false
@@ -318,7 +319,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         windows.removeAll();managerCatalogIDs.removeAll()
         manager?.rows.removeAll()
         readOnly=false;syncRemoteClipboard.isEnabled=true
-        supportsAnchoredPointer=false;supportsWindowManagement=false
+        supportsPositionedWheel=false;supportsAnchoredPointer=false;supportsWindowManagement=false
         supportsWindowVideoAlpha=false
         authenticated=false;heartbeatMS=nil;lastHeartbeat = .distantPast
         pending = false
@@ -745,6 +746,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             surface.window.title = readOnly ? L("sharing.viewer_title",title) : title
             surface.view.inputEnabled = !readOnly && !surface.locallyClosed
             surface.view.anchoredPointer = supportsAnchoredPointer
+            surface.view.positionedWheel = supportsPositionedWheel
             if supportsWindowManagement,let value=entry["presentation"] as? [String:Any] {applyPresentation(WindowPresentation(value),to:surface)}
             else {updateViewerControls(surface)}
         }
@@ -897,6 +899,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 supportsPlaybackFeedback=supportsPipeline && response["playback_feedback"] as? Bool == true
                 supportsLiveSettings=response["live_video_settings"] as? Bool == true
                 supportsWindowVideoAlpha=response["window_video_alpha"] as? Bool == true
+                supportsPositionedWheel=response["positioned_wheel"] as? Bool == true
                 supportsAnchoredPointer=response["anchored_pointer"] as? Bool == true
                 supportsMultiSession=response["multi_session"] as? Bool == true
                 supportsWindowManagement=response["window_management"] as? Bool == true

@@ -45,3 +45,13 @@ FFmpeg NVENC 从 P1 调整为 P3，保留超低延迟、无 B 帧、无前瞻。
 设计参考 RustDesk 1.5.3，按 Kokoda 自身协议独立实现，见[来源声明](../../THIRD_PARTY.md)。保留 TCP/TLS 与 OPAQUE。二进制本地 IPC、QUIC、总带宽分配、适应长 RTT 的可配置在途帧数及物理显卡／丢包网络调优仍待实现。两帧上限主动限制积压，但在高 RTT 链路可能限制吞吐。本地 bridge 仍使用 Base64 JSON；后台解析与解码避免占用 UI 线程，但没有消除序列化成本。
 
 协商[窗口管理](window-management.md)后，独立窗口分别展示，面板跟随实际 owner，原生边框默认缩放本地画面，仅显式主机尺寸模式调整主机窗口大小，不再沿用所有弹窗按根窗口缩放的旧布局。各窗口的视频及反馈仍独立运行。
+
+## 指针命中与带位置滚轮 — 2026-11-22
+
+执行输入时显式进入 per-monitor-v2 DPI 上下文，返回时恢复调用者上下文。命中检查、鼠标定位与读回使用物理坐标 API，与 DWM 采集边界保持一致。目标激活后重新验证身份并读取边界，不再使用激活前的屏幕位置；如果激活改变了尺寸，仍等待新帧。微软说明：[物理坐标命中](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-windowfromphysicalpoint)、[DWM 边界与 DPI 虚拟化矩形的区别](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getwindowrect)。
+
+`positioned_wheel` 能力声明新增 `wheel_at` 事件，包含图像内归一化 `x/y`、源窗口物理 `width/height` 和有界 `delta`。Mac、Qt 使用一条自带位置的滚轮事件；旧主机保留先移动再滚动的兼容路径。Qt 指针同样改用归一化坐标及源尺寸，不依赖本地缩放。禁用输入、画面边缘外或正在进行锚定拖动时，不发送滚轮事件。
+
+真正被遮挡仍拒绝输入，不因同进程、owner 或置顶属性绕过成员及命中校验。失败诊断只包含原因分类、目标 DPI、前台及 layered 标记，不暴露私人标题、路径、类名及遮挡窗口身份。用于区分屏幕外、模态禁用、同进程或其他进程表面，不能把所有命中失败都解释成肉眼可见遮挡。
+
+交互式合成回归：配置 Windows SDK/FFmpeg 开发环境后，在交互桌面运行 `cargo run -p kokoda-platform-windows --example input_probe --target x86_64-pc-windows-msvc`。仅创建测试窗口，验证激活时位移、DPI-unaware 调用方带位置滚轮、真实置顶遮挡，最后关闭测试窗口。这不等于特定版本微信的验收。

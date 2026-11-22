@@ -109,6 +109,17 @@ mod tests {
         .is_ok());
     }
     #[test]
+    fn positioned_wheel_requires_a_complete_point() {
+        assert!(validate(&json!({"command":"input","events":[{"kind":"wheel_at","x":0.3,"y":0.4,"width":800,"height":600,"delta":120}]})).is_ok());
+        assert!(
+            validate(&json!({"command":"input","events":[{"kind":"wheel_at","delta":120}]}))
+                .is_err()
+        );
+        assert!(
+            validate(&json!({"command":"input","events":[{"kind":"wheel","delta":120}]})).is_ok()
+        );
+    }
+    #[test]
     fn profiles_match_cross_platform_fixture() {
         let fixture: serde_json::Value =
             serde_json::from_str(include_str!("../../../tests/contracts/video-profiles.json"))

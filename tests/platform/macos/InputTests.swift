@@ -57,3 +57,17 @@ precondition(view.hasMarkedText() && events.count==beforeRecovery,"Focus repair 
 view.insertText("中",replacementRange:NSRange(location:NSNotFound,length:0))
 precondition(events.count==beforeRecovery+1 && events.last?["text"] as? String == "中")
 print("PASS: missing responder recovers; repeat focus recovery preserves marked text and submits once")
+
+// A wheel operation carries its own target point and physical source dimensions.
+view.inputEnabled=true;view.positionedWheel=true;events.removeAll()
+view.scroll(point:NSPoint(x:200,y:150),delta:-120)
+precondition(events.count==1 && events[0]["kind"] as? String=="wheel_at")
+precondition(events[0]["x"] as? CGFloat==0.25 && events[0]["y"] as? CGFloat==0.75)
+precondition(events[0]["width"] as? Int==800 && events[0]["height"] as? Int==600)
+view.inputEnabled=false;view.scroll(point:NSPoint(x:200,y:150),delta:120)
+precondition(events.count==1)
+view.inputEnabled=true;view.positionedWheel=false;events.removeAll()
+view.scroll(point:NSPoint(x:200,y:150),delta:120)
+precondition(events.count==2 && events[0]["kind"] as? String=="move" && events[1]["kind"] as? String=="wheel")
+view.scroll(point:NSPoint(x:-10,y:150),delta:120);precondition(events.count==2)
+print("PASS: atomic wheel coordinates, legacy fallback, disabled input and outside-image rejection")

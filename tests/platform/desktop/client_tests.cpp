@@ -143,6 +143,21 @@ class ClientTests : public QObject {
         for (auto row : requests)
             QVERIFY(row[0].toJsonObject()["command"] != "window_action");
     }
+    void positionedWheel() {
+        Canvas c;c.allowed=true;c.positionedWheel=true;c.source={1600,900};c.resize(800,450);
+        QSignalSpy events(&c,&Canvas::input);
+        QWheelEvent wheel(QPointF(200,112.5),QPointF(200,112.5),QPoint(),QPoint(0,120),Qt::NoButton,Qt::NoModifier,Qt::NoScrollPhase,false);
+        QApplication::sendEvent(&c,&wheel);
+        QCOMPARE(events.size(),1);
+        auto e=events[0][0].toJsonObject();
+        QCOMPARE(e["kind"].toString(),QString("wheel_at"));
+        QCOMPARE(e["x"].toDouble(),0.25);QCOMPARE(e["y"].toDouble(),0.25);
+        QCOMPARE(e["width"].toInt(),1600);QCOMPARE(e["height"].toInt(),900);
+        c.allowed=false;QApplication::sendEvent(&c,&wheel);QCOMPARE(events.size(),1);
+        c.allowed=true;c.positionedWheel=false;events.clear();QApplication::sendEvent(&c,&wheel);
+        QCOMPARE(events.size(),2);QCOMPARE(events[0][0].toJsonObject()["kind"].toString(),QString("move"));
+        QCOMPARE(events[1][0].toJsonObject()["kind"].toString(),QString("wheel"));
+    }
     void focusLossReleasesButtons() {
         Canvas canvas;
         canvas.allowed = true;

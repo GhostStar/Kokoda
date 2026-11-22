@@ -32,6 +32,13 @@ pub enum InputEvent {
         button: u8,
         down: bool,
     },
+    WheelAt {
+        x: f64,
+        y: f64,
+        width: u32,
+        height: u32,
+        delta: i32,
+    },
     Wheel {
         delta: i32,
     },

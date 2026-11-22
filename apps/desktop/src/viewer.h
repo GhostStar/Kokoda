@@ -26,7 +26,7 @@ class Canvas : public QWidget {
     QImage image;
     QSize source;
     QPointF caret = {0.05, 0.1};
-    bool allowed = false, anchored = true;
+    bool allowed = false, anchored = true, positionedWheel = false;
     QRectF imageRect() const;
     void releaseInput();
     QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;

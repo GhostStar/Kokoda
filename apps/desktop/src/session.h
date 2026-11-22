@@ -48,6 +48,7 @@ class Session : public QObject {
     QMap<quint64, std::shared_ptr<AppSession>> apps;
     QJsonArray catalog;
     int preset = 2;
+    bool positionedWheel = false;
     bool authenticated = false, readOnly = true, syncClipboard = true, includeApplication = true;
     bool adaptiveResolution = true, autoReconnect = true;
     explicit Session(QObject *parent = nullptr);

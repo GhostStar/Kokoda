@@ -15,6 +15,7 @@ struct PointerGesture {
 
 final class RemoteView: NSView, NSTextInputClient {
     var inputEnabled = true { didSet {if !inputEnabled {cancelComposition();cancelPointerDrag()}} }
+    var positionedWheel=false
     var anchoredPointer = false
     var pointerGesture: PointerGesture?
     var nextPointerGesture: UInt64 = 0
@@ -132,10 +133,18 @@ final class RemoteView: NSView, NSTextInputClient {
     override func rightMouseUp(with event: NSEvent) { pointer(event, kind:"button", down:false, button:1) }
     override func rightMouseDragged(with event: NSEvent) { pointer(event, kind:"move") }
     override func scrollWheel(with event: NSEvent) {
-        guard image != nil, imageRect.contains(convert(event.locationInWindow, from: nil)) else { return }
-        pointer(event, kind:"move")
-        let delta = max(-1200, min(1200, Int(event.scrollingDeltaY * (event.hasPreciseScrollingDeltas ? 12 : 120))))
-        sendInput?(["kind":"wheel", "delta":delta])
+        scroll(point:convert(event.locationInWindow,from:nil),delta:max(-1200,min(1200,Int(event.scrollingDeltaY * (event.hasPreciseScrollingDeltas ? 12 : 120)))))
+    }
+    func scroll(point:NSPoint,delta:Int) {
+        guard inputEnabled,pointerGesture==nil,let image=image,imageRect.contains(point),delta != 0 else{return}
+        let rect=imageRect
+        var event:[String:Any] = ["kind":positionedWheel ? "wheel_at":"move",
+            "x":min(0.999999,max(0,(point.x-rect.minX)/rect.width)),
+            "y":min(0.999999,max(0,1-(point.y-rect.minY)/rect.height)),
+            "width":Int(image.size.width),"height":Int(image.size.height)]
+        let delta=max(-1200,min(1200,delta))
+        if positionedWheel {event["delta"]=delta;sendInput?(event)}
+        else {sendInput?(event);sendInput?(["kind":"wheel","delta":delta])}
     }
     static let virtualKeys: [UInt16: Int] = [
         0:65,1:83,2:68,3:70,4:72,5:71,6:90,7:88,8:67,9:86,11:66,
